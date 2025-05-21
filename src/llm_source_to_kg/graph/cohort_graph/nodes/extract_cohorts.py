@@ -1,9 +1,13 @@
 import asyncio
+import json
 from llm_source_to_kg.graph.cohort_graph.state import CohortGraphState
 from llm_source_to_kg.utils.llm_util import get_llm
 from llm_source_to_kg.utils.logger import get_logger
 from llm_source_to_kg.schema.llm import LLMMessage, LLMConfig
 from json_repair import repair_json
+from llm_source_to_kg.utils.s3 import get_file_content_from_s3
+from llm_source_to_kg.config import config
+import os
 
 async def extract_cohorts(state: CohortGraphState) -> CohortGraphState:
     """
@@ -18,20 +22,27 @@ async def extract_cohorts(state: CohortGraphState) -> CohortGraphState:
         top_p=0.95,
         max_output_tokens=8192
     )
-    prompt = open("../prompts/extract_cohort_prompt.txt", "r").read()
+    prompt_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "prompts", "extract_cohort_prompt.txt")
+    prompt = open(prompt_path, "r").read()
 
     messages = [
         LLMMessage(role="system", content=prompt),
-        LLMMessage(role="user", content=state["document"])
+        LLMMessage(role="user", content=state["source_contents"])
     ]
 
     response = await llm.chat_llm(messages, llm_config)
 
-    cohort_result = repair_json(response.content)
+    # JSON 문자열 수정 후 Python 객체로 파싱
+    repaired_json_str = repair_json(response.content)
+    try:
+        cohort_result = json.loads(repaired_json_str)
+    except json.JSONDecodeError as e:
+        doc_logger.error(f"JSON 파싱 오류: {e}")
+        cohort_result = {"main_cohorts": []}
 
-    doc_logger.info(f"{state['source_reference_number']} 코호트 추출 응답: {cohort_result}")
+    doc_logger.info(f"{state['source_reference_number']} 코호트 추출 완료")
 
-    state["cohort_result"] = cohort_result
+    state["cohorts_json"] = cohort_result
     return state
 
 
@@ -39,8 +50,8 @@ async def extract_cohorts(state: CohortGraphState) -> CohortGraphState:
 if __name__ == "__main__":
 
     state = CohortGraphState(
-        document=open("../../../../../datasets/guideline/contents/NG238.json", "r").read(),
+        document= get_file_content_from_s3(config.AWS_S3_BUCKET, f"nice/NG238.json"),
         source_reference_number="NG238",
-        cohort_result=[]
+        cohorts_json=[]
     )
     asyncio.run(extract_cohorts(state))

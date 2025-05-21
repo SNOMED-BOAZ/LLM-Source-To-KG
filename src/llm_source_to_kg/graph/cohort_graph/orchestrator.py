@@ -11,6 +11,8 @@ from llm_source_to_kg.graph.cohort_graph.nodes import (
     return_final_cohorts
 )
 
+import asyncio
+
 
 def build_cohort_graph() -> StateGraph:
     """
@@ -96,3 +98,59 @@ def visualize_cohort_graph():
         print("그래프 시각화를 위해 graphviz를 설치해주세요: pip install graphviz")
     except Exception as e:
         print(f"그래프 시각화 중 오류 발생: {e}")
+
+
+async def test_run():
+    # 테스트용 간소화된 그래프 구성
+    from langgraph.graph import END, StateGraph
+
+    source_reference_number = "NG238"
+    output_dir = "test_outputs"
+    
+    # 테스트용 그래프 초기화
+    test_graph = StateGraph(CohortGraphState)
+    
+    # 구현된 노드만 추가
+    test_graph.add_node("load_source_content", load_source_content)
+    test_graph.add_node("extract_cohorts", extract_cohorts)
+    test_graph.add_node("return_final_cohorts", return_final_cohorts)
+    
+    # 간단한 테스트 플로우 구성
+    test_graph.add_edge("load_source_content", "extract_cohorts")
+    test_graph.add_edge("extract_cohorts", "return_final_cohorts")
+    test_graph.add_edge("return_final_cohorts", END)
+    
+    # 시작 노드 설정
+    test_graph.set_entry_point("load_source_content")
+    
+    # 그래프 컴파일 및 실행
+    test_chain = test_graph.compile()
+    result = await test_chain.ainvoke({"source_reference_number": source_reference_number})
+    
+    # print("테스트 결과:")
+    # print(result)
+
+    print("마크다운 변환된 코호트 배열")
+    import os
+    
+    # outputs 디렉토리 생성 (없는 경우)
+    os.makedirs(f"{output_dir}/{result['source_reference_number']}", exist_ok=True)
+    
+    # 마크다운 결과를 각각 파일로 저장
+    for i, markdown in enumerate(result['cohorts_markdown'], 1):
+        output_filename = f"{output_dir}/{result['source_reference_number']}/{i}.md"
+        with open(output_filename, "w", encoding="utf-8") as f:
+            f.write(markdown)
+    
+    print(f"코호트 마크다운이 '{output_dir}/{result['source_reference_number']}/' 디렉터리에 저장되었습니다.")
+    
+    # visualize_cohort_graph()
+
+def main():
+    """
+    메인 함수 - test_run 코루틴을 실행합니다.
+    """
+    asyncio.run(test_run())
+
+if __name__ == "__main__":
+    asyncio.run(test_run())
