@@ -4,7 +4,7 @@ from llm_source_to_kg.config import config
 from llm_source_to_kg.graph.cohort_graph.state import CohortGraphState
 import json
 
-def load_source_content(state: CohortGraphState, source_id: str) -> CohortGraphState:
+def load_source_content(state: CohortGraphState) -> CohortGraphState:
     """
     소스 콘텐츠를 로드하고 state를 업데이트합니다.
     
@@ -15,6 +15,8 @@ def load_source_content(state: CohortGraphState, source_id: str) -> CohortGraphS
     Returns:
         업데이트된 state
     """
+    source_id = state["source_reference_number"]
+    
     logger = get_logger()
     logger.info(f"Loading source content: {source_id}")
     
@@ -39,13 +41,13 @@ if __name__ == "__main__":
         "answer": "",
         "is_valid": False,
         "retries": 0,
-        "source_reference_number": "",
+        "source_reference_number": "NG238",
         "source_contents": "",
         "cohort_result": []
     }
     
     # 함수 테스트
-    updated_state = load_source_content(test_state, "NG238")
+    updated_state = load_source_content(test_state)
     print(updated_state['source_contents'])
     print(f"Source Reference Number: {updated_state['source_reference_number']}")
     print(f"Source Contents Length: {len(updated_state['source_contents'])}")
