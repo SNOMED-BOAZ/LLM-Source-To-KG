@@ -27,9 +27,9 @@ def build_analysis_graph() -> StateGraph:
     1. 코호트 분석 - 코호트 데이터를 분석합니다.
     2. 분석 검증 - 분석 결과의 유효성을 검증합니다.
     3. 조건부 분기:
-        a. 유효하지 않고 재시도 가능 → 분석 재시도
-        b. 유효함 → OMOP 매핑 진행
-        c. 재시도 불가 → 종료
+       a. 유효하지 않고 재시도 가능 → 분석 재시도
+       b. 유효함 → OMOP 매핑 진행
+       c. 재시도 불가 → 종료
     4. OMOP 매핑 - 분석 결과를 OMOP CDM으로 매핑합니다.
     5. 지식 그래프 적재 - 매핑 결과를 지식 그래프에 적재합니다.
     
@@ -38,7 +38,7 @@ def build_analysis_graph() -> StateGraph:
     """
     # 그래프 초기화
     analysis_graph = StateGraph(AnalysisGraphState)
-    
+
     # 노드 추가 - 각 단계별 처리 함수 등록
     analysis_graph.add_node("analyze_cohort", analyze_cohort)
     analysis_graph.add_node("validate_analysis", validate_analysis)
@@ -67,7 +67,7 @@ def build_analysis_graph() -> StateGraph:
     
     # 시작 노드 설정
     analysis_graph.set_entry_point("analyze_cohort")
-    
+
     return analysis_graph
 
 def get_analysis_chain():
