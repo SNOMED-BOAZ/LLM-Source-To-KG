@@ -11,4 +11,5 @@ class CohortGraphState(TypedDict):
     retries: Annotated[int, 'retry count']
     source_reference_number: Annotated[str, 'NICE Guideline referece Number']
     source_contents: Annotated[str, 'NICE Guideline contents']
-    cohort_result: Annotated[List[Dict[str, Any]], 'cohort Result']
+    cohorts_json: Annotated[List[Dict[str, Any]], 'cohort Result']
+    cohorts_markdown: Annotated[List[str], 'cohort Result in markdown']
