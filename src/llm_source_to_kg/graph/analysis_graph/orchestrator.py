@@ -1,75 +1,100 @@
-from state import AnalysisGraphState
-from langgraph import Graph, Orchestrator
+from langgraph.graph import END, StateGraph
 
-from nodes import (
+from src.llm_source_to_kg.graph.analysis_graph.state import AnalysisGraphState
+from src.llm_source_to_kg.graph.analysis_graph.nodes import (
     analyze_cohort,
     load_to_kg,
     mapping_to_omop,
     validate_analysis
 )
 
-def build_workflow() -> Graph[AnalysisGraphState]:
-    g = Graph[AnalysisGraphState]("OmopMappingWorkflow")
-
-    # 1) 분석 노드
-    analysis = analyze_cohort(
-        name="RunAnalysis",
-        inputs=["cohort"],
-        outputs=["analysis"],
-    )
-
-    # 2) 검증 노드
-    validation = validate_analysis(
-        name="ValidateAnalysis",
-        inputs=["analysis"],
-        outputs=["is_valid"],
-    )
-
-    # 3) 매핑 API 호출 노드
-    mapping_api = mapping_to_omop(
-        name="CallMappingAPI",
-        inputs=["analysis"],
-        outputs=["mapping_result"],
-    )
-
-    # 4) 지식 그래프 적재 노드
-    loader = load_to_kg(
-        name="LoadToKnowledgeGraph",
-        inputs=["mapping_result"],
-        outputs=[],
-    )
-
-    # 노드 등록
-    g.add_nodes(analysis, validation, mapping_api, loader)
-    g.add_edge("RunAnalysis", "ValidateAnalysis")
-    g.add_edge(
-        "ValidateAnalysis", "RunAnalysis",
-        condition=lambda st: not st["is_valid"] and st["retries"] < MAX_RETRIES
-    )
-    g.add_edge(
-        "ValidateAnalysis", "CallMappingAPI",
-        condition=lambda st: st["is_valid"]
-    )
-    g.add_edge("CallMappingAPI", "LoadToKnowledgeGraph")
-
-    return g
-
-
 MAX_RETRIES = 3
 
-def build():    
-    init_state: AnalysisGraphState = {
-        "context": "",
-        "question": "",
-        "answer": "",
-        "source_reference_number": "",
-        "is_valid": False,
-        "retries": 0,
-        "cohort": {},       # CohortGraphState 결과
-        "analysis": {},     # 빈 placeholder
-    }
+def route_after_validation(state: AnalysisGraphState) -> str:
+    """검증 후 라우팅 결정"""
+    if not state["is_valid"] and state["retries"] < MAX_RETRIES:
+        return "retry_analysis"
+    elif state["is_valid"]:
+        return "mapping_to_omop"
+    else:
+        return END
 
-    wf = build_workflow()
-    orch = Orchestrator(wf)
-    result_state = orch.run(init_state)
-    print("Workflow completed. Final state:", result_state)
+def build_analysis_graph() -> StateGraph:
+    """
+    분석 그래프 구성하기
+    
+    플로우:
+    1. 코호트 분석 - 코호트 데이터를 분석합니다.
+    2. 분석 검증 - 분석 결과의 유효성을 검증합니다.
+    3. 조건부 분기:
+       a. 유효하지 않고 재시도 가능 → 분석 재시도
+       b. 유효함 → OMOP 매핑 진행
+       c. 재시도 불가 → 종료
+    4. OMOP 매핑 - 분석 결과를 OMOP CDM으로 매핑합니다.
+    5. 지식 그래프 적재 - 매핑 결과를 지식 그래프에 적재합니다.
+    
+    Returns:
+        StateGraph: 구성된 분석 그래프
+    """
+    # 그래프 초기화
+    analysis_graph = StateGraph(AnalysisGraphState)
+
+    # 노드 추가 - 각 단계별 처리 함수 등록
+    analysis_graph.add_node("analyze_cohort", analyze_cohort)
+    analysis_graph.add_node("validate_analysis", validate_analysis)
+    analysis_graph.add_node("mapping_to_omop", mapping_to_omop)
+    analysis_graph.add_node("load_to_kg", load_to_kg)
+    
+    # 엣지 정의 - 메인 플로우
+    # 1. 코호트 분석 → 분석 검증
+    analysis_graph.add_edge("analyze_cohort", "validate_analysis")
+    
+    # 조건부 엣지 정의 - 검증 결과에 따라 다른 경로로 진행
+    analysis_graph.add_conditional_edges(
+        "validate_analysis",
+        route_after_validation,
+        {
+            "retry_analysis": "analyze_cohort",  # 분석 재시도
+            "mapping_to_omop": "mapping_to_omop"  # OMOP 매핑 진행
+        }
+    )
+    
+    # OMOP 매핑 → 지식 그래프 적재
+    analysis_graph.add_edge("mapping_to_omop", "load_to_kg")
+    
+    # 지식 그래프 적재 후 종료
+    analysis_graph.add_edge("load_to_kg", END)
+    
+    # 시작 노드 설정
+    analysis_graph.set_entry_point("analyze_cohort")
+
+    return analysis_graph
+
+def get_analysis_chain():
+    """
+    분석 체인 인스턴스 반환 - 컴파일된 그래프 반환
+    
+    Returns:
+        컴파일된 분석 그래프 체인
+    """
+    graph = build_analysis_graph()
+    return graph.compile()
+
+def visualize_analysis_graph():
+    """
+    분석 그래프를 시각화하여 저장합니다.
+    
+    Returns:
+        None: 그래프를 'analysis_graph.png' 파일로 저장합니다.
+    """
+    try:
+        import graphviz
+        
+        graph = build_analysis_graph()
+        dot = graph.get_graph().draw_graphviz(engine="dot")
+        dot.render("analysis_graph", format="png", cleanup=True)
+        print("분석 그래프가 'analysis_graph.png' 파일로 시각화되었습니다.")
+    except ImportError:
+        print("그래프 시각화를 위해 graphviz를 설치해주세요: pip install graphviz")
+    except Exception as e:
+        print(f"그래프 시각화 중 오류 발생: {e}")

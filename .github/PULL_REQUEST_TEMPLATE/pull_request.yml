@@ -1,0 +1,35 @@
+name: Pull Request
+description: PR을 생성하기 위한 템플릿입니다.
+title: "[#Issue Number] title"
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Pull Request 생성을 위한 템플릿입니다. 아래 항목들을 작성해주세요.
+
+  - type: textarea
+    id: changes
+    attributes:
+      label: 🔄 변경 사항
+      description: 주요 변경 사항을 설명해주세요
+      placeholder: 어떤 내용을 변경했는지 설명해주세요
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 📝 체크리스트
+      description: PR 전 확인해야 할 사항들을 체크해주세요
+      options:
+        - label: 최신 main 브랜치와 충돌 여부 확인
+
+  - type: textarea
+    id: additional-info
+    attributes:
+      label: 📌 추가 정보
+      description: 추가로 필요한 정보가 있다면 작성해주세요
+      placeholder: 추가 정보가 있으면 작성해주세요
+    validations:
+      required: false 
