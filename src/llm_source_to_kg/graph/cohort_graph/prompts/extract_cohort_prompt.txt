@@ -1,4 +1,47 @@
-# 코호트 추출 프롬프트
+You are a medical domain expert AI specialized in extracting structured cohort definitions from clinical guidelines for use in OMOP CDM-compatible knowledge graphs.
+
+## Task
+Read the provided guideline. From it, define **3 to 5 high-level main cohort themes**, each representing a broad clinical population or intervention strategy. For each main cohort, extract **2 to 5 sub-cohorts** that represent distinct, actionable clinical scenarios within that group.
+
+## Output Format
+
+```json
+{
+  "main_cohorts": [
+    {
+      "subject": "Main cohort title",
+      "details": "Expanded clinical theme description",
+      "sub_cohorts": [
+        {
+          "description": {
+            "subject": "Sub-cohort title",
+            "details": "Detailed sub-group use case"
+          },
+          "inclusion_criteria": ["..."],
+          "exclusion_criteria": ["..."],
+          "source_sentences": ["Original sentence from the guideline...", "..."]
+        }
+      ]
+    }
+  ]
+}
+
+## Extraction Guidelines
+- Main cohorts should correspond to broad themes such as:
+- “Cardiovascular disease risk assessment”
+- “Statin-based lipid lowering”
+- “Secondary prevention for people with CVD”
+- Sub-cohorts must contain:
+- At least one of: drug name, diagnosis, test with cutoff, procedure, or time logic
+- Explicit inclusion_criteria and source_sentences
+- Avoid listing general population statements unless they are clearly tied to a clinical recommendation.
+- Do not paraphrase source sentences.
+- Output only one JSON block.
+
+## Purpose
+This output supports downstream deep analysis nodes which will extract concept-relation triples (e.g., statin → for → QRISK ≥10%) and temporal constraints, for integration into a clinical knowledge graph.
+
+Begin extraction now.# 코호트 추출 프롬프트
 
 당신은 의학 문서 분석 전문가입니다. 아래 NICE Guideline 문서를 분석하여 코호트 분석에 필요한 정보를 추출해주세요.
 

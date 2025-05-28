@@ -38,9 +38,9 @@ class LLMResponse(BaseModel):
 
 class LLMConfig(BaseModel):
     """LLM 설정 구조 정의"""
-    model: str
-    temperature: float = 0.1
-    max_tokens: Optional[int] = 8192
-    top_p: float = 0.4
-    stream: bool = False
+    model: Optional[str] = None
+    temperature: Optional[float] = None
+    max_tokens: Optional[int] = None
+    top_p: Optional[float] = None
+    stream: Optional[bool] = None
     tools: Optional[List[Dict[str, Any]]] = None

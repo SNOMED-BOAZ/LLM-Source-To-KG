@@ -18,10 +18,14 @@ typing-extensions = "^4.8.0"
 langgraph = "^0.4.3"
 boto3 = "^1.38.13"
 json-repair = "^0.44.1"
+graphviz = "^0.20.3"
 
 [tool.poetry.scripts]
 test-gemini = "llm_source_to_kg.test.test_gemini:main"
 test-logger = "llm_source_to_kg.test.test_logger:main"
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
 
 [build-system]
 requires = ["poetry-core"]
