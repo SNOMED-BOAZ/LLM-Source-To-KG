@@ -5,7 +5,8 @@ from src.llm_source_to_kg.graph.analysis_graph.nodes import (
     analyze_cohort,
     load_to_kg,
     mapping_to_omop,
-    validate_analysis
+    validate_analysis,
+    update_synonyms
 )
 
 MAX_RETRIES = 3
@@ -31,7 +32,8 @@ def build_analysis_graph() -> StateGraph:
        b. 유효함 → OMOP 매핑 진행
        c. 재시도 불가 → 종료
     4. OMOP 매핑 - 분석 결과를 OMOP CDM으로 매핑합니다.
-    5. 지식 그래프 적재 - 매핑 결과를 지식 그래프에 적재합니다.
+    5. 매핑된 용어를 ES 서버로 보내 동의어 사전을 업데이트합니다.
+    6. 지식 그래프 적재 - 매핑 결과를 지식 그래프에 적재합니다.
     
     Returns:
         StateGraph: 구성된 분석 그래프
@@ -43,6 +45,7 @@ def build_analysis_graph() -> StateGraph:
     analysis_graph.add_node("analyze_cohort", analyze_cohort)
     analysis_graph.add_node("validate_analysis", validate_analysis)
     analysis_graph.add_node("mapping_to_omop", mapping_to_omop)
+    analysis_graph.add_node("update_synonyms", update_synonyms)
     analysis_graph.add_node("load_to_kg", load_to_kg)
     
     # 엣지 정의 - 메인 플로우
@@ -60,7 +63,10 @@ def build_analysis_graph() -> StateGraph:
     )
     
     # OMOP 매핑 → 지식 그래프 적재
-    analysis_graph.add_edge("mapping_to_omop", "load_to_kg")
+    analysis_graph.add_edge("mapping_to_omop", "update_synonyms")
+
+    # 매핑된 용어 → ES 서버로 전송 및 동의어 사전 업데이트
+    analysis_graph.add_edge("update_synonyms", "load_to_kg")
     
     # 지식 그래프 적재 후 종료
     analysis_graph.add_edge("load_to_kg", END)
