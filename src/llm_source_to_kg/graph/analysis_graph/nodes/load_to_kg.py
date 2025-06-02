@@ -10,6 +10,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def load_to_kg(state: AnalysisGraphState) -> AnalysisGraphState:
+    return state # TODO: 테스트 중 임시 용도
     """
     OMOP 매핑 결과를 Neo4j 지식 그래프에 적재합니다.
     
@@ -120,26 +121,32 @@ def load_to_kg(state: AnalysisGraphState) -> AnalysisGraphState:
 
 def create_cohort_node_query(cohort_id: str, cohort_content: Dict[str, Any]) -> str:
     """코호트 노드 생성 Cypher 쿼리"""
+    name_escaped = cohort_content.get("name", "").replace("'", "\\'")
+    description_escaped = cohort_content.get("description", "").replace("'", "\\'")
+    
     return f"""
     MERGE (c:Cohort {{id: '{cohort_id}'}})
-    SET c.name = '{cohort_content.get("name", "").replace("'", "\\'")}',
-        c.description = '{cohort_content.get("description", "").replace("'", "\\'")}',
+    SET c.name = '{name_escaped}',
+        c.description = '{description_escaped}',
         c.created_at = datetime()
     """
 
 def create_entity_node_query(entity_type: str, kg_node: Dict[str, Any]) -> str:
     """엔티티 노드 생성 Cypher 쿼리"""
     properties = kg_node["properties"]
+    concept_name_escaped = properties["concept_name"].replace("'", "\\'")
+    source_text_escaped = properties.get("source_text", "").replace("'", "\\'")
+    
     return f"""
     MERGE (e:Entity:OMOP {{concept_id: '{kg_node["node_id"]}'}})
     SET e += {{
-        concept_name: '{properties["concept_name"].replace("'", "\\'")}',
+        concept_name: '{concept_name_escaped}',
         domain_id: '{properties.get("domain_id", "")}',
         vocabulary_id: '{properties.get("vocabulary_id", "")}',
         concept_class_id: '{properties.get("concept_class_id", "")}',
         standard_concept: '{properties.get("standard_concept", "")}',
         confidence_score: {properties.get("confidence_score", 0.0)},
-        source_text: '{properties.get("source_text", "").replace("'", "\\'")}',
+        source_text: '{source_text_escaped}',
         entity_type: '{entity_type}',
         created_at: datetime()
     }}
