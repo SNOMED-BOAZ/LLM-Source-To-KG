@@ -88,44 +88,43 @@ def visualize_cohort_graph():
         None: 그래프를 'cohort_graph.png' 파일로 저장합니다.
     """
     try:
-        import graphviz
-        
         graph = build_cohort_graph()
-        dot = graph.get_graph().draw_graphviz(engine="dot")
-        dot.render("cohort_graph", format="png", cleanup=True)
-        print("코호트 그래프가 'cohort_graph.png' 파일로 시각화되었습니다.")
-    except ImportError:
-        print("그래프 시각화를 위해 graphviz를 설치해주세요: pip install graphviz")
+        
+        # LangGraph 0.4.3+ 버전에서는 draw_png() 사용 (GraphViz 사용)
+        try:
+            png_data = graph.get_graph().draw_png()
+            with open("cohort_graph.png", "wb") as f:
+                f.write(png_data)
+            print("코호트 그래프가 'cohort_graph.png' 파일로 시각화되었습니다.")
+        except Exception as graphviz_error:
+            # GraphViz가 없거나 실패한 경우 Mermaid PNG 사용
+            print(f"GraphViz 시각화 실패: {graphviz_error}")
+            print("Mermaid PNG 시각화를 시도합니다...")
+            
+            mermaid_png_data = graph.get_graph().draw_mermaid_png()
+            with open("cohort_graph_mermaid.png", "wb") as f:
+                f.write(mermaid_png_data)
+            print("코호트 그래프가 'cohort_graph_mermaid.png' 파일로 시각화되었습니다.")
+            
+    except ImportError as e:
+        print(f"시각화 라이브러리 가져오기 실패: {e}")
+        print("그래프 시각화를 위해 다음을 시도해보세요:")
+        print("  pip install graphviz")
+        print("  또는 시스템에 Graphviz를 설치하세요")
     except Exception as e:
         print(f"그래프 시각화 중 오류 발생: {e}")
 
 
 async def test_run():
-    # 테스트용 간소화된 그래프 구성
-    from langgraph.graph import END, StateGraph
-
+    # 기존의 build_cohort_graph() 함수 활용
     source_reference_number = "NG238"
     output_dir = "test_outputs"
     
-    # 테스트용 그래프 초기화
-    test_graph = StateGraph(CohortGraphState)
+    # 기존 코호트 그래프 함수 사용
+    cohort_chain = get_cohort_chain()
     
-    # 구현된 노드만 추가
-    test_graph.add_node("load_source_content", load_source_content)
-    test_graph.add_node("extract_cohorts", extract_cohorts)
-    test_graph.add_node("return_final_cohorts", return_final_cohorts)
-    
-    # 간단한 테스트 플로우 구성
-    test_graph.add_edge("load_source_content", "extract_cohorts")
-    test_graph.add_edge("extract_cohorts", "return_final_cohorts")
-    test_graph.add_edge("return_final_cohorts", END)
-    
-    # 시작 노드 설정
-    test_graph.set_entry_point("load_source_content")
-    
-    # 그래프 컴파일 및 실행
-    test_chain = test_graph.compile()
-    result = await test_chain.ainvoke({"source_reference_number": source_reference_number})
+    # 그래프 실행
+    result = await cohort_chain.ainvoke({"source_reference_number": source_reference_number})
     
     # print("테스트 결과:")
     # print(result)
