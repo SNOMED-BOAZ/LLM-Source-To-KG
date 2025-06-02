@@ -10,5 +10,5 @@ class AnalysisGraphState(TypedDict):
     source_reference_number: Annotated[str, "NICE Guideline reference Number"]
     is_valid: Annotated[bool, "Whether analysis validation was successful"]
     retries: Annotated[int, "Retry count"]
-    cohort: Annotated[Dict[str, Any], "Each cohort analysis result from CohortGraphState"]
+    cohort: Annotated[str, "Single cohort markdown content"]
     analysis: Annotated[AnalysisSchema, "Analysis result"]
