@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package synonyms_data;
+
+service SynonymService {
+  rpc addSynonym (SynonymDataRequest) returns (SynonymDataResponse);
+}
+
+message Synonym {
+  string origin = 1;
+  string new = 2;
+}
+
+message SynonymDataRequest {
+  string time = 1;
+  repeated Synonym synonyms = 2;
+}
+
+message SynonymDataResponse {
+  string status = 1;
+  string message = 2;
+}

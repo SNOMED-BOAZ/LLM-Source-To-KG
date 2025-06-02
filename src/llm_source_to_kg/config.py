@@ -9,7 +9,15 @@ class Config:
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY is not set")
-    
+
+    ES_SERVER_HOST = os.getenv("ES_SERVER_HOST")
+    if not ES_SERVER_HOST:
+        raise ValueError("GEMINI_API_KEY is not set")
+
+    ES_SERVER_PORT = os.getenv("ES_SERVER_PORT")
+    if not ES_SERVER_PORT:
+        raise ValueError("GEMINI_API_KEY is not set")
+
 
     
     # AWS S3 관련 설정
