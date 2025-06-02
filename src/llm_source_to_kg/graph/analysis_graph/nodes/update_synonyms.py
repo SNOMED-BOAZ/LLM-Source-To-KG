@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from llm_source_to_kg.config import config
 from llm_source_to_kg.graph.analysis_graph.nodes.mapping_to_omop import OMOPMapping
 from src.llm_source_to_kg.graph.analysis_graph.state import AnalysisGraphState
@@ -9,7 +9,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def extract_synonym_pairs(state: AnalysisGraphState) -> list[tuple[str, str]]:
+def extract_synonym_pairs(state: AnalysisGraphState) -> list[synonyms_data_pb2.Synonym]:
     """state에서 원본-매핑된 concept_name 쌍을 추출한다."""
     synonyms = []
 
@@ -46,7 +46,7 @@ def send_synonyms_to_server(synonyms: list[synonyms_data_pb2.Synonym], grpc_host
             )
 
             response = stub.addSynonym(request)
-            logger.info(f"Response: {response}")
+            logger.info(f"Response {response}")
         except Exception as e:
             logger.error(f"gRPC 전송 실패 - {type(e).__name__}: {str(e)}")
 
@@ -68,7 +68,7 @@ def update_synonyms(state: AnalysisGraphState) -> AnalysisGraphState:
 if __name__ == '__main__':
     test_omop_mapping = OMOPMapping(
         concept_id="concept_id_1",
-        concept_name="concept_name_1",
+        concept_name="test_4",
         domain_id="domain_id_1",
         vocabulary_id="vocabulary_id_1",
         concept_class_id="concept_class_id_1",
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     test_cohort_mapping = {
         "entity_type_1": [
             {
-                "original_entity": "entity_1",
+                "original_entity": "entits_4",
                 "omop_mapping": test_omop_mapping.__dict__,
                 "mapping_status": "success",
                 "kg_node": None
