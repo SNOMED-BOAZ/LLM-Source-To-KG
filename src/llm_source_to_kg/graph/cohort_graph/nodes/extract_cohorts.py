@@ -4,6 +4,7 @@ from llm_source_to_kg.graph.cohort_graph.state import CohortGraphState
 from llm_source_to_kg.utils.llm_util import get_llm
 from llm_source_to_kg.utils.logger import get_logger
 from llm_source_to_kg.schema.llm import LLMMessage, LLMConfig
+from llm_source_to_kg.schema.validate.cohorts import validate_cohort_schema
 from json_repair import repair_json
 from llm_source_to_kg.utils.s3 import get_file_content_from_s3
 from llm_source_to_kg.config import config
@@ -36,13 +37,23 @@ async def extract_cohorts(state: CohortGraphState) -> CohortGraphState:
     repaired_json_str = repair_json(response.content)
     try:
         cohort_result = json.loads(repaired_json_str)
+        
+        # 스키마 검증 수행
+        is_valid, schema_errors = validate_cohort_schema(cohort_result)
+        
+        if not is_valid:
+            doc_logger.warning(f"Schema validation failed: {schema_errors}")
+            cohort_result = {"main_cohorts": []}
+        else:
+            doc_logger.info("Schema validation successful")
+            
     except json.JSONDecodeError as e:
         doc_logger.error(f"JSON 파싱 오류: {e}")
         cohort_result = {"main_cohorts": []}
 
     doc_logger.info(f"{state['source_reference_number']} 코호트 추출 완료")
 
-    state["cohorts_json"] = cohort_result
+    state["cohorts_json"] = cohort_result["main_cohorts"]
     return state
 
 

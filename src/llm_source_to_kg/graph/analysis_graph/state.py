@@ -5,10 +5,16 @@ import operator
 
 class AnalysisGraphState(TypedDict):
     context: Annotated[str, operator.add]
-    question: Annotated[str, "user question"]
-    answer: Annotated[str, "llm answer"]
-    source_reference_number: Annotated[str, "NICE Guideline reference Number"]
-    is_valid: Annotated[bool, "Whether analysis validation was successful"]
-    retries: Annotated[int, "Retry count"]
-    cohort: Annotated[Dict[str, Any], "Each cohort analysis result from CohortGraphState"]
-    analysis: Annotated[AnalysisSchema, "Analysis result"]
+    question: Annotated[str, 'analysis extraction prompt']
+    answer: Annotated[str, 'llm answer']
+
+    is_valid: Annotated[bool, 'whether analysis validation was successful']
+    validation_feedback: Annotated[str, 'feedback for valid analysis']
+    retries: Annotated[int, 'retry count']
+    retry_analysis: Annotated[List[Dict[str, Any]], 'retry target analysis']
+
+    source_reference_number: Annotated[str, 'NICE Guideline reference Number']
+    source_contents: Annotated[str, 'NICE Guideline contents']
+
+    cohort: Annotated[str, 'cohort markdown to analyze']
+    analysis: Annotated[Dict[str, Any], 'analysis result']

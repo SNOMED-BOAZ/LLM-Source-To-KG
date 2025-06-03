@@ -12,11 +12,15 @@ class Config:
 
     ES_SERVER_HOST = os.getenv("ES_SERVER_HOST")
     if not ES_SERVER_HOST:
-        raise ValueError("GEMINI_API_KEY is not set")
+        raise ValueError("ES_SERVER_HOST is not set")
 
     ES_SERVER_PORT = os.getenv("ES_SERVER_PORT")
     if not ES_SERVER_PORT:
-        raise ValueError("GEMINI_API_KEY is not set")
+        raise ValueError("ES_SERVER_PORT is not set")
+
+    GRPC_SERVER_PORT = os.getenv("GRPC_SERVER_PORT")
+    if not GRPC_SERVER_PORT:
+        raise ValueError("GRPC_SERVER_PORT is not set")
 
 
     

@@ -7,7 +7,7 @@ def run_full_workflow(input_state):
     cohort_state = cohort_graph.invoke(input_state)
 
     # 2. 분석 대상 배열 추출
-    cohort_list = cohort_state["cohort_results"]
+    cohort_list = cohort_state["cohorts_json"]
 
     # 3. 각 대상에 대해 AnalysisGraph 실행
     analysis_graph = build_analysis_graph()
