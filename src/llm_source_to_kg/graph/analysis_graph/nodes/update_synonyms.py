@@ -35,7 +35,7 @@ def extract_synonym_pairs(state: AnalysisGraphState) -> list[synonyms_data_pb2.S
     return synonyms
 
 
-def send_synonyms_to_server(synonyms: list[synonyms_data_pb2.Synonym], grpc_host: str = f"{config.ES_SERVER_HOST}:{config.ES_SERVER_PORT}"):
+def send_synonyms_to_server(synonyms: list[synonyms_data_pb2.Synonym], grpc_host: str = f"{config.ES_SERVER_HOST}:{config.GRPC_SERVER_PORT}"):
     """gRPC를 통해 synonym 쌍을 서버로 전송한다."""
     with grpc.insecure_channel(grpc_host) as channel:
         stub = synonyms_data_pb2_grpc.SynonymServiceStub(channel)
