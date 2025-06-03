@@ -61,7 +61,7 @@ def return_final_cohorts(state: CohortGraphState) -> CohortGraphState:
         업데이트된 그래프 상태
     """
     cohorts_json = state['cohorts_json']
-    main_cohorts = cohorts_json.get('main_cohorts', [])
+    main_cohorts = cohorts_json if isinstance(cohorts_json, list) else []
     
     markdown_cohorts = [cohort_to_markdown(cohort) for cohort in main_cohorts]
     

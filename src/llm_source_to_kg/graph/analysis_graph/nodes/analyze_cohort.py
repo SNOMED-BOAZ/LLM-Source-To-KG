@@ -1,14 +1,22 @@
 from src.llm_source_to_kg.graph.analysis_graph.state import AnalysisGraphState
-from src.llm_source_to_kg.schema.state import AnalysisSchema
+from src.llm_source_to_kg.schema.state import (
+    AnalysisSchema, DrugSchema, DiagnosticSchema, 
+    MedicalTestSchema, SurgerySchema, OMOPSchema
+)
 from llm_source_to_kg.utils.llm_util import get_llm
 from llm_source_to_kg.schema.llm import LLMMessage, LLMConfig, LLMRole
+from llm_source_to_kg.utils.logger import get_logger
 import json
 import asyncio
 import os
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
 import re
 from json_repair import repair_json
+from pydantic import BaseModel, ValidationError
+
+# 전역 로거 사용
+logger = get_logger("analysis_graph")
 
 def load_prompt(template_name: str) -> str:
     """프롬프트 템플릿 파일을 로드합니다."""
@@ -62,75 +70,171 @@ def clean_llm_response(response: str) -> str:
         return json_str.strip()
         
     except Exception as e:
-        print(f"JSON 정제 중 오류 발생: {str(e)}")
-        print(f"원본 응답: {response[:200]}...")
-        print(f"정제 시도 후 응답: {json_str[:200]}...")
+        logger.error(f"JSON 정제 중 오류 발생: {str(e)}")
+        logger.error(f"원본 응답: {response[:200]}...")
+        logger.error(f"정제 시도 후 응답: {json_str[:200]}...")
+        raise
+
+def convert_to_schema(entity: Dict[str, Any], entity_type: str) -> BaseModel:
+    """엔티티를 해당하는 스키마 모델로 변환합니다."""
+    try:
+        if entity_type == "drug":
+            return DrugSchema(**entity)
+        elif entity_type == "diagnostic":
+            return DiagnosticSchema(**entity)
+        elif entity_type == "test":
+            return MedicalTestSchema(**entity)
+        elif entity_type == "surgery":
+            return SurgerySchema(**entity)
+        else:
+            raise ValueError(f"Unknown entity type: {entity_type}")
+    except ValidationError as e:
+        logger.error(f"Schema validation error for {entity_type}: {str(e)}")
         raise
 
 def validate_entity_structure(entity: Dict[str, Any], entity_type: str) -> Dict[str, Any]:
     """엔티티 구조를 검증하고 정제합니다."""
-    if entity_type == "condition_entities":
-        required_fields = ["concept_name", "condition_category", "severity", "staging", 
-                         "risk_factors", "complications", "evidence_level", "source_text"]
+    logger.debug(f"Validating {entity_type} entity structure")
+    
+    if entity_type == "drug":
+        required_fields = ["concept_name", "concept_id", "domain_id", "vocabulary_id", 
+                         "concept_code", "standard_concept", "mapping_confidence", "drug_name"]
         for field in required_fields:
             if field not in entity:
-                if field == "staging":
-                    entity[field] = {"system": "", "stage_value": "", "criteria": ""}
-                elif field in ["risk_factors", "complications"]:
-                    entity[field] = []
+                if field == "mapping_confidence":
+                    entity[field] = 0.0
+                    logger.debug(f"Added default mapping_confidence for drug entity")
+                elif field == "drug_name":
+                    entity[field] = None
+                    logger.debug(f"Added default drug_name for drug entity")
                 else:
                     entity[field] = ""
+                    logger.debug(f"Added empty {field} for drug entity")
+        
+        # DrugSchema로 변환 시도
+        try:
+            drug_schema = convert_to_schema(entity, "drug")
+            return drug_schema
+        except ValidationError as e:
+            logger.error(f"Drug schema validation failed: {str(e)}")
+            raise
     
-    elif entity_type == "condition_relationships":
-        required_fields = ["source_condition", "target_entity", "relationship_type", 
-                         "details", "certainty", "evidence"]
+    elif entity_type == "diagnostic":
+        required_fields = ["concept_name", "concept_id", "domain_id", "vocabulary_id", 
+                         "concept_code", "standard_concept", "mapping_confidence", 
+                         "icd_code", "snomed_code"]
         for field in required_fields:
             if field not in entity:
-                entity[field] = ""
-    
-    elif entity_type == "diagnostic_pathways":
-        required_fields = ["name", "description", "steps", "evidence_level"]
-        for field in required_fields:
-            if field not in entity:
-                if field == "steps":
-                    entity[field] = []
+                if field == "mapping_confidence":
+                    entity[field] = 0.0
+                    logger.debug(f"Added default mapping_confidence for diagnostic entity")
+                elif field in ["icd_code", "snomed_code"]:
+                    entity[field] = None
+                    logger.debug(f"Added default {field} for diagnostic entity")
                 else:
                     entity[field] = ""
+                    logger.debug(f"Added empty {field} for diagnostic entity")
+        
+        # DiagnosticSchema로 변환 시도
+        try:
+            diagnostic_schema = convert_to_schema(entity, "diagnostic")
+            return diagnostic_schema
+        except ValidationError as e:
+            logger.error(f"Diagnostic schema validation failed: {str(e)}")
+            raise
     
-    elif entity_type == "condition_cohorts":
-        required_fields = ["name", "description", "target_population", 
-                         "inclusion_criteria", "exclusion_criteria", "condition_occurrences"]
+    elif entity_type == "test":
+        required_fields = ["concept_name", "concept_id", "domain_id", "vocabulary_id", 
+                         "concept_code", "standard_concept", "mapping_confidence",
+                         "test_name", "operator", "value", "unit"]
         for field in required_fields:
             if field not in entity:
-                if field in ["inclusion_criteria", "exclusion_criteria", "condition_occurrences"]:
-                    entity[field] = []
+                if field == "mapping_confidence":
+                    entity[field] = 0.0
+                    logger.debug(f"Added default mapping_confidence for test entity")
+                elif field == "value":
+                    entity[field] = 0.0
+                    logger.debug(f"Added default value for test entity")
+                elif field == "operator":
+                    entity[field] = "="
+                    logger.debug(f"Added default operator for test entity")
                 else:
                     entity[field] = ""
+                    logger.debug(f"Added empty {field} for test entity")
+        
+        # MedicalTestSchema로 변환 시도
+        try:
+            test_schema = convert_to_schema(entity, "test")
+            return test_schema
+        except ValidationError as e:
+            logger.error(f"Test schema validation failed: {str(e)}")
+            raise
     
+    elif entity_type == "surgery":
+        required_fields = ["concept_name", "concept_id", "domain_id", "vocabulary_id", 
+                         "concept_code", "standard_concept", "mapping_confidence", "surgery_name"]
+        for field in required_fields:
+            if field not in entity:
+                if field == "mapping_confidence":
+                    entity[field] = 0.0
+                    logger.debug(f"Added default mapping_confidence for surgery entity")
+                else:
+                    entity[field] = ""
+                    logger.debug(f"Added empty {field} for surgery entity")
+        
+        # SurgerySchema로 변환 시도
+        try:
+            surgery_schema = convert_to_schema(entity, "surgery")
+            return surgery_schema
+        except ValidationError as e:
+            logger.error(f"Surgery schema validation failed: {str(e)}")
+            raise
+    
+    logger.debug(f"Entity validation completed for {entity_type}")
     return entity
 
-def validate_extracted_entities(entities: Dict[str, Any]) -> Dict[str, list]:
-    """추출된 엔티티를 검증하고 정리합니다."""
-    expected_keys = ["condition_entities", "condition_relationships", 
-                    "diagnostic_pathways", "condition_cohorts", "detailed_analysis"]
+def validate_analysis_schema(analysis: Dict[str, Any]) -> Dict[str, Any]:
+    """AnalysisSchema에 맞게 분석 결과를 검증하고 정제합니다."""
+    logger.info("Starting analysis schema validation")
     validated = {}
     
-    for key in expected_keys:
-        if key == "detailed_analysis":
-            validated[key] = entities.get(key, "")
-            continue
-            
-        if key in entities and isinstance(entities[key], list):
-            # 각 엔티티 검증 및 정제
-            validated[key] = [
-                validate_entity_structure(item, key)
-                for item in entities[key]
-                if item and isinstance(item, dict)
-            ]
+    # 각 엔티티 타입별 검증 및 스키마 변환
+    for entity_type in ["drug", "diagnostic", "test", "surgery"]:
+        if entity_type in analysis and analysis[entity_type]:
+            logger.debug(f"Validating {entity_type} entity")
+            try:
+                # 엔티티가 리스트인 경우 첫 번째 항목만 사용
+                entity = analysis[entity_type]
+                if isinstance(entity, list):
+                    if not entity:
+                        logger.warning(f"Empty list for {entity_type} entity")
+                        validated[entity_type] = None
+                        continue
+                    entity = entity[0]
+                    logger.debug(f"Using first item from {entity_type} entity list")
+                
+                validated[entity_type] = validate_entity_structure(entity, entity_type)
+            except ValidationError as e:
+                logger.error(f"Validation failed for {entity_type}: {str(e)}")
+                validated[entity_type] = None
         else:
-            validated[key] = []
+            logger.debug(f"No {entity_type} entity found, setting to None")
+            validated[entity_type] = None
     
-    return validated
+    # 추가 필드 검증
+    for field in ["etc", "temporal_relation", "source_text_span"]:
+        if field in analysis:
+            validated[field] = analysis[field]
+            logger.debug(f"Added {field} to validated analysis")
+    
+    # AnalysisSchema로 변환 시도
+    try:
+        analysis_schema = AnalysisSchema(**validated)
+        logger.info("Analysis schema validation completed successfully")
+        return validated
+    except ValidationError as e:
+        logger.error(f"Analysis schema validation failed: {str(e)}")
+        raise
 
 async def analyze_cohort(state: AnalysisGraphState) -> AnalysisGraphState:
     """
@@ -142,294 +246,115 @@ async def analyze_cohort(state: AnalysisGraphState) -> AnalysisGraphState:
     Returns:
         업데이트된 그래프 상태 (analysis 필드 포함)
     """
-    print("\n=== Starting analyze_cohort ===")
-    cohort_data = state["cohort"]
-    print(f"Number of cohorts to process: {len(cohort_data)}")
+    logger.info("Starting cohort analysis")
+    cohort_markdown = state["cohort"]
+    logger.debug(f"Processing cohort markdown (length: {len(cohort_markdown) if cohort_markdown else 0})")
+    
+    if not cohort_markdown:
+        logger.error("No cohort data provided")
+        state["answer"] = "Error: No cohort data provided"
+        state["is_valid"] = False
+        state["validation_feedback"] = "No cohort data available for analysis"
+        return state
     
     # LLM 클라이언트 초기화
-    print("Initializing LLM client...")
+    logger.info("Initializing LLM client")
     llm = get_llm(llm_type="gemini", model="gemini-2.0-flash")
     llm_config = LLMConfig(
         temperature=0.1,
         top_p=0.95,
         max_output_tokens=8192
     )
-    print("LLM client initialized")
+    logger.debug("LLM client initialized")
     
     # 프롬프트 템플릿 로드
-    print("Loading prompt template...")
-    prompt_template = load_prompt("extract_analysis")
-    print("Prompt template loaded")
+    logger.info("Loading prompt template")
+    try:
+        prompt_template = load_prompt("extract_analysis")
+        logger.debug("Prompt template loaded successfully")
+    except Exception as e:
+        logger.error(f"Error loading prompt template: {str(e)}")
+        state["answer"] = f"Error loading prompt template: {str(e)}"
+        state["is_valid"] = False
+        state["validation_feedback"] = f"Failed to load prompt template: {str(e)}"
+        return state
     
-    # 코호트별로 분석 수행
-    analysis_results = {}
+    logger.debug("Formatting cohort content")
     
-    for cohort_id, cohort_content in cohort_data.items():
-        print(f"\nProcessing cohort: {cohort_id}")
-        
-        # 프롬프트 구성
-        print("Formatting cohort content...")
-        print(f"cohort_content: {cohort_content}")
-        formatted_content = {
-            "main_cohort": cohort_content["main_cohort"],
-            "sub_cohorts": cohort_content["sub_cohorts"]
-        }
-        
-        # 프롬프트에 컨텍스트와 질문 추가
-        formatted_prompt = prompt_template.replace("{manager_response}", json.dumps(formatted_content, ensure_ascii=False, indent=2))
-        prompt = f"""Context: {state['context']}
+    # 프롬프트에 마크다운 내용 직접 포함
+    formatted_prompt = prompt_template.replace("{manager_response}", cohort_markdown)
+    prompt = f"""Context: {state['context']}
 Question: {state['question']}
 
 {formatted_prompt}
 
-중요: 반드시 JSON 형식으로만 응답해주세요. 다른 설명이나 텍스트는 포함하지 마세요."""
+중요: 반드시 AnalysisSchema 형식에 맞는 JSON으로만 응답해주세요. 다른 설명이나 텍스트는 포함하지 마세요."""
 
-        print("Sending prompt to LLM...")
+    logger.info("Sending prompt to LLM")
+    
+    try:
+        # LLM 호출을 위한 메시지 구성
+        logger.debug("Constructing LLM messages")
+        messages = [
+            LLMMessage(
+                role=LLMRole.SYSTEM, 
+                content="You are a medical entity extraction assistant. Your task is to analyze cohort data and extract medical entities according to the AnalysisSchema format. You must respond ONLY with a valid JSON object matching the schema, no other text or explanation."
+            ),
+            LLMMessage(role=LLMRole.USER, content=prompt)
+        ]
         
+        # LLM 호출
+        logger.info("Calling LLM")
+        response = await llm.chat_llm(messages, llm_config)
+        logger.debug(f"Raw LLM response: {response.content[:200]}...")
+        
+        # JSON 파싱 시도
+        if isinstance(response.content, str):
+            logger.debug("Cleaning LLM response")
+            # LLM 응답 정제
+            cleaned_response = clean_llm_response(response.content)
+            logger.debug(f"Cleaned response: {cleaned_response[:200]}...")
+            
+            try:
+                logger.debug("Attempting JSON parsing")
+                # 일반 JSON 파싱 시도
+                extracted_entities = json.loads(cleaned_response)
+                logger.debug("JSON parsing successful")
+            except json.JSONDecodeError:
+                logger.warning("JSON parsing failed, attempting repair")
+                # 실패하면 json_repair 사용
+                repaired_json = repair_json(cleaned_response)
+                extracted_entities = json.loads(repaired_json)
+                logger.debug("JSON repair successful")
+        else:
+            logger.debug("Response is not a string, using as is")
+            extracted_entities = response.content
+            
+        # AnalysisSchema 기반 검증 및 변환
+        logger.info("Validating extracted entities against AnalysisSchema")
         try:
-            # LLM 호출을 위한 메시지 구성
-            print("Constructing LLM messages...")
-            messages = [
-                LLMMessage(role=LLMRole.SYSTEM, content="You are a medical entity extraction assistant. Your task is to analyze cohort data and extract medical entities, relationships, and diagnostic pathways in JSON format. You must respond ONLY with a valid JSON object, no other text or explanation."),
-                LLMMessage(role=LLMRole.USER, content=prompt)
-            ]
-            
-            # LLM 호출
-            print("Calling LLM...")
-            response = await llm.chat_llm(messages, llm_config)
-            print(f"Raw LLM response: {response.content[:200]}...")
-            
-            # JSON 파싱 시도
-            if isinstance(response.content, str):
-                print("Cleaning LLM response...")
-                # LLM 응답 정제
-                cleaned_response = clean_llm_response(response.content)
-                print(f"Cleaned response: {cleaned_response[:200]}...")
-                
-                try:
-                    print("Attempting JSON parsing...")
-                    # 일반 JSON 파싱 시도
-                    extracted_entities = json.loads(cleaned_response)
-                    print("JSON parsing successful")
-                except json.JSONDecodeError:
-                    print("JSON parsing failed, attempting repair...")
-                    # 실패하면 json_repair 사용
-                    repaired_json = repair_json(cleaned_response)
-                    extracted_entities = json.loads(repaired_json)
-                    print("JSON repair successful")
-            else:
-                print("Response is not a string, using as is")
-                extracted_entities = response.content
-                
-            # 엔티티 검증 및 정리
-            print("Validating extracted entities...")
-            validated_entities = validate_extracted_entities(extracted_entities)
-            print("Entity validation completed")
-                
-            analysis_results[cohort_id] = {
-                "entities": validated_entities,
-                "status": "success",
-                "cohort_content": cohort_content,
-                "raw_response": response.content[:500]  # 원본 응답 일부 저장
-            }
+            validated_analysis = validate_analysis_schema(extracted_entities)
+            logger.debug("Entity validation completed")
             
             # 상태 업데이트
-            state["answer"] = response.content[:500]  # LLM 응답 저장
-            print("Analysis completed successfully")
+            state["analysis"] = validated_analysis
+            state["is_valid"] = True
+            state["answer"] = "Analysis completed successfully"
+            state["validation_feedback"] = "Analysis completed and validated successfully"
             
-        except json.JSONDecodeError as e:
-            print(f"JSON 파싱 오류 (cohort_id: {cohort_id}): {str(e)}")
-            print(f"원본 응답: {response.content if 'response' in locals() else 'No response'}")
-            # JSON 파싱 실패시 더미 응답 사용
-            print("Generating dummy entities...")
-            dummy_entities = generate_dummy_entities(cohort_content)
-            analysis_results[cohort_id] = {
-                "entities": dummy_entities,
-                "status": "error_fallback",
-                "error": f"JSON 파싱 오류: {str(e)}",
-                "cohort_content": cohort_content,
-                "raw_response": response.content[:500] if 'response' in locals() else ""
-            }
-            state["answer"] = f"Error: {str(e)}"
+            logger.info("Cohort analysis completed successfully")
+            return state
+            
+        except ValidationError as e:
+            logger.error(f"Schema validation failed: {str(e)}")
+            state["answer"] = f"Schema validation failed: {str(e)}"
             state["is_valid"] = False
-            print("Fallback to dummy entities completed")
-            
-        except Exception as e:
-            print(f"분석 오류 (cohort_id: {cohort_id}): {str(e)}")
-            print(f"Error type: {type(e)}")
-            import traceback
-            print(f"Traceback: {traceback.format_exc()}")
-            analysis_results[cohort_id] = {
-                "entities": {},
-                "status": "error", 
-                "error": f"분석 오류: {str(e)}",
-                "cohort_content": cohort_content
-            }
-            state["answer"] = f"Error: {str(e)}"
-            state["is_valid"] = False
-    
-    # AnalysisSchema 형태로 변환
-    print("\nConverting to AnalysisSchema...")
-    analysis_schema = AnalysisSchema(
-        cohort_analyses=analysis_results,
-        summary={
-            "total_cohorts": len(cohort_data),
-            "successful_analyses": len([r for r in analysis_results.values() if r["status"] == "success"]),
-            "failed_analyses": len([r for r in analysis_results.values() if r["status"] == "error"]),
-            "fallback_analyses": len([r for r in analysis_results.values() if r["status"] == "error_fallback"])
-        }
-    )
-    
-    # 상태 업데이트
-    state["analysis"] = analysis_schema
-    state["retries"] = state.get("retries", 0)
-    
-    print("=== Completed analyze_cohort ===")
-    return state
-
-def generate_dummy_entities(cohort_content: str) -> Dict[str, list]:
-    """코호트 내용 기반 더미 엔티티 생성 (LLM 실패시 폴백용)"""
-    # 더미 데이터 생성
-    dummy_entities = {
-        "condition_entities": [
-            {
-                "concept_name": "Test Condition",
-                "condition_category": "Test Category",
-                "severity": "Mild",
-                "staging": {
-                    "system": "Test System",
-                    "stage_value": "Stage 1",
-                    "criteria": "Test Criteria"
-                },
-                "risk_factors": ["Test Risk Factor"],
-                "complications": ["Test Complication"],
-                "evidence_level": "Low",
-                "source_text": cohort_content[:100]
-            }
-        ],
-        "condition_relationships": [],
-        "diagnostic_pathways": [],
-        "condition_cohorts": [],
-        "detailed_analysis": "Failed to generate detailed analysis."
-    }
-    
-    return dummy_entities
-
-async def process_cohorts(cohorts_file_path: str) -> Dict[str, Any]:
-    """
-    여러 코호트를 순차적으로 처리합니다.
-    
-    Args:
-        cohorts_file_path: 코호트 JSON 파일 경로
-        
-    Returns:
-        모든 코호트의 분석 결과
-    """
-    print("\n=== Starting process_cohorts ===")
-    print(f"Loading cohorts from: {cohorts_file_path}")
-    
-    # JSON 파일 로드
-    try:
-        with open(cohorts_file_path, 'r', encoding='utf-8') as f:
-            cohorts_data = json.load(f)
-        print(f"Successfully loaded {len(cohorts_data.get('main_cohorts', []))} main cohorts")
-    except Exception as e:
-        print(f"Error loading cohorts file: {str(e)}")
-        raise
-    
-    all_results = {}
-    
-    # 각 메인 코호트 처리
-    for main_cohort in cohorts_data.get("main_cohorts", []):
-        main_subject = main_cohort["subject"]
-        print(f"\nProcessing main cohort: {main_subject}")
-        
-        # 모든 sub_cohorts의 정보를 통합
-        integrated_content = {
-            "main_cohort": {
-                "subject": main_cohort["subject"],
-                "details": main_cohort["details"]
-            },
-            "sub_cohorts": [
-                {
-                    "subject": sub_cohort["description"]["subject"],
-                    "details": sub_cohort["description"]["details"],
-                    "inclusion_criteria": sub_cohort["inclusion_criteria"],
-                    "exclusion_criteria": sub_cohort["exclusion_criteria"],
-                    "source_sentences": sub_cohort["source_sentences"]
-                }
-                for sub_cohort in main_cohort.get("sub_cohorts", [])
-            ]
-        }
-        
-        print("Setting up initial state...")
-        # 초기 상태 설정
-        initial_state = AnalysisGraphState(
-            context="Analyzing medical entities and relationships from cohort data",
-            question="Extract medical entities, relationships, and diagnostic pathways from the given cohort data",
-            answer="",  # LLM이 채울 응답
-            source_reference_number="NG238",
-            is_valid=True,
-            retries=0,
-            cohort={main_subject: integrated_content},  # 통합된 내용을 main_subject를 키로 저장
-            analysis=None  # LLM이 채울 분석 결과
-        )
-        
-        try:
-            print("Calling analyze_cohort...")
-            # 코호트 분석 수행
-            result_state = await analyze_cohort(initial_state)
-            print("analyze_cohort completed successfully")
-            
-            # 분석 결과 저장
-            if result_state["analysis"] and "cohort_analyses" in result_state["analysis"]:
-                all_results[main_subject] = result_state["analysis"]["cohort_analyses"].get(main_subject)
-            
-        except Exception as e:
-            print(f"Error processing main cohort {main_subject}: {str(e)}")
-            print(f"Error type: {type(e)}")
-            import traceback
-            print(f"Traceback: {traceback.format_exc()}")
-            all_results[main_subject] = {
-                "status": "error",
-                "error": str(e)
-            }
-    
-    print("\n=== Completed process_cohorts ===")
-    return all_results
-
-async def main():
-    """메인 실행 함수"""
-    print("\n=== Starting main function ===")
-
-    PROJECT_ROOT = "/Users/hyejiyu/Desktop/2025/BOAZ_ADV/langGraph/BOAZ-SNUH_llm_source_to_kg"
-    cohorts_file_path = os.path.join(PROJECT_ROOT, "datasets/results/cohorts/NG238_cohorts.json")
-    print(f"Cohorts file path: {cohorts_file_path}")
-
-    try:
-        print("Starting process_cohorts...")
-        # 모든 코호트 처리
-        results = await process_cohorts(cohorts_file_path)
-        print("process_cohorts completed")
-        
-        # 결과 저장
-        output_path = os.path.join(PROJECT_ROOT, "datasets/results/analysis/NG238_analysis_results.json")
-        print(f"Saving results to: {output_path}")
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(results, f, indent=2, ensure_ascii=False)
-            
-        print(f"Analysis completed. Results saved to {output_path}")
+            state["validation_feedback"] = f"Analysis failed due to schema validation: {str(e)}"
+            return state
         
     except Exception as e:
-        print(f"Error in main execution: {str(e)}")
-        print(f"Error type: {type(e)}")
-        import traceback
-        print(f"Traceback: {traceback.format_exc()}")
-
-if __name__ == "__main__":
-    print("\n=== Script started ===")
-    # 비동기 메인 함수 실행
-    asyncio.run(main())
-    print("\n=== Script completed ===")
+        logger.error(f"Error during analysis: {str(e)}", exc_info=True)
+        state["answer"] = f"Error during analysis: {str(e)}"
+        state["is_valid"] = False
+        state["validation_feedback"] = f"Analysis failed: {str(e)}"
+        return state

@@ -11,7 +11,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.11"
 
-google-generativeai = "^0.3.2"
+google-generativeai = "^0.8.5"
 pydantic = "^2.5.2"
 python-dotenv = "^1.0.0"
 typing-extensions = "^4.8.0"
@@ -24,15 +24,20 @@ transformers = "^4.36.0"
 torch = "^2.1.0"
 rank-bm25 = "^0.2.2"
 nltk = "^3.8.1"
+protobuf = "^5.0.0"
+pytest = "^8.4.0"
+pytest-asyncio = "^1.0.0"
 
 [tool.poetry.scripts]
 test-gemini = "llm_source_to_kg.test.test_gemini:main"
 test-logger = "llm_source_to_kg.test.test_logger:main"
 test-cohort-graph = "llm_source_to_kg.graph.cohort_graph.orchestrator:main"
 test-cohort-validation = "llm_source_to_kg.test.test_cohort_validation:main"
+test-analysis-graph = "llm_source_to_kg.graph.analysis_graph.orchestrator:main"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"
+grpcio-tools = "^1.68.0"
 
 [build-system]
 requires = ["poetry-core"]
