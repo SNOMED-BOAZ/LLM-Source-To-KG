@@ -8,6 +8,11 @@ from src.llm_source_to_kg.graph.analysis_graph.nodes import (
     validate_analysis,
     update_synonyms
 )
+from llm_source_to_kg.utils.logger import get_logger
+import json
+
+# 전역 로거 초기화
+logger = get_logger("analysis_graph")
 
 MAX_RETRIES = 3
 
@@ -127,13 +132,13 @@ async def test_run():
     
     # 코호트 마크다운 파일들 로드
     if not os.path.exists(cohort_dir):
-        print(f"오류: '{cohort_dir}' 디렉터리가 존재하지 않습니다.")
+        logger.error(f"오류: '{cohort_dir}' 디렉터리가 존재하지 않습니다.")
         return
     
     # *.md 파일들 찾기
     md_files = glob.glob(f"{cohort_dir}/*.md")
     if not md_files:
-        print(f"오류: '{cohort_dir}' 디렉터리에 마크다운 파일이 없습니다.")
+        logger.error(f"오류: '{cohort_dir}' 디렉터리에 마크다운 파일이 없습니다.")
         return
     
     # 첫 번째 코호트만 테스트용으로 사용
@@ -141,11 +146,11 @@ async def test_run():
     with open(test_cohort_file, 'r', encoding='utf-8') as f:
         cohort_content = f.read()
     
-    print(f"테스트할 코호트 파일: {test_cohort_file}")
+    logger.info(f"테스트할 코호트 파일: {test_cohort_file}")
     # 첫 번째 제목 추출
     lines = cohort_content.split('\n')
     title = next((line[2:].strip() for line in lines if line.startswith('# ')), 'Unknown')
-    print(f"코호트 제목: {title}")
+    logger.info(f"코호트 제목: {title}")
     
     # 분석 그래프 실행을 위한 초기 상태 설정
     initial_state = AnalysisGraphState(
@@ -163,39 +168,50 @@ async def test_run():
     analysis_chain = get_analysis_chain()
     
     try:
-        print("분석 그래프를 실행합니다...")
+        logger.info("분석 그래프를 실행합니다...")
         result = await analysis_chain.ainvoke(initial_state)
         
-        print("=" * 50)
-        print("분석 그래프 테스트 결과:")
-        print("=" * 50)
-        print(f"Source Reference Number: {result.get('source_reference_number', 'N/A')}")
-        print(f"분석 유효성: {result.get('is_valid', False)}")
-        print(f"재시도 횟수: {result.get('retries', 0)}")
-        print(f"응답: {result.get('answer', 'N/A')[:200]}...")
+        logger.info("=" * 50)
+        logger.info("분석 그래프 테스트 결과:")
+        logger.info("=" * 50)
+        logger.info(f"Source Reference Number: {result.get('source_reference_number', 'N/A')}")
+        logger.info(f"분석 유효성: {result.get('is_valid', False)}")
+        logger.info(f"재시도 횟수: {result.get('retries', 0)}")
+        logger.info(f"응답: {result.get('answer', 'N/A')[:200]}...")
         
         # 분석 결과 출력
-        if result.get('analysis'):
-            analysis = result['analysis']
-            print(f"\n분석 결과:")
-            print(f"  - 상태: {analysis.get('status', 'N/A')}")
-            if 'entities' in analysis:
-                entities = analysis['entities']
-                for key, value in entities.items():
-                    if isinstance(value, list):
-                        print(f"  - {key}: {len(value)}개 항목")
-                    elif isinstance(value, str):
-                        print(f"  - {key}: {value[:100]}...")
-                    else:
-                        print(f"  - {key}: {type(value)}")
+        if result.get('mapping_result'):
+            mapping_result = result['mapping_result']
+            logger.info(f"\n매핑 결과:")
+            for cohort_id, cohort_result in mapping_result.items():
+                logger.info(f"\n코호트 ID: {cohort_id}")
+                logger.info(f"  - 상태: {cohort_result.get('status', 'N/A')}")
+                logger.info(f"  - 총 엔티티 수: {cohort_result['summary']['total_entities']}")
+                logger.info(f"  - 매핑된 엔티티 수: {cohort_result['summary']['mapped_entities']}")
+                
+                if 'mappings' in cohort_result and 'all_entities' in cohort_result['mappings']:
+                    logger.info("\n  매핑된 엔티티:")
+                    for entity in cohort_result['mappings']['all_entities']:
+                        logger.info(f"    - 원본 엔티티: {entity['original_entity']}")
+                        logger.info(f"      매핑 상태: {entity['mapping_status']}")
+                        if entity['mapping_status'] == 'success':
+                            omop = entity['omop_mapping']
+                            logger.info(f"      OMOP 매핑: {omop['concept_name']} (ID: {omop['concept_id']})")
+                            logger.info(f"      신뢰도: {omop['confidence_score']:.2f}")
         
-        print("=" * 50)
-        print("분석 그래프 테스트가 완료되었습니다.")
+        # 중간 상태 로깅
+        logger.info("\n중간 상태:")
+        logger.info(f"analysis 상태: {json.dumps(result.get('analysis', {}), indent=2, ensure_ascii=False)}")
+        logger.info(f"mapping_result 상태: {json.dumps(result.get('mapping_result', {}), indent=2, ensure_ascii=False)}")
+        logger.info(f"kg_nodes 상태: {json.dumps([node.__dict__ for node in result.get('kg_nodes', [])], indent=2, ensure_ascii=False)}")
+        
+        logger.info("=" * 50)
+        logger.info("분석 그래프 테스트가 완료되었습니다.")
         
     except Exception as e:
-        print(f"분석 그래프 실행 중 오류 발생: {e}")
+        logger.error(f"분석 그래프 실행 중 오류 발생: {e}")
         import traceback
-        traceback.print_exc()
+        logger.error(traceback.format_exc())
 
 
 def main():

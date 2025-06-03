@@ -5,12 +5,11 @@ from typing import Dict, Any, List, Optional
 import asyncio
 from dataclasses import dataclass
 from elasticsearch import Elasticsearch
-import logging
+from llm_source_to_kg.utils.logger import get_logger
 from llm_source_to_kg.config import config
 
-# 로깅 설정
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# 전역 로거 사용
+logger = get_logger("analysis_graph")
 
 @dataclass
 class OMOPMapping:
@@ -43,8 +42,11 @@ async def mapping_to_omop(state: AnalysisGraphState) -> AnalysisGraphState:
     analysis = state["analysis"]
     
     # Elasticsearch 클라이언트 설정
-    # es = Elasticsearch("http://localhost:9200")
-    es = Elasticsearch(f"http://{config.ES_SERVER_HOST}:{config.ES_SERVER_PORT}")
+    es = Elasticsearch(
+        #f"http://{config.ES_SERVER_HOST}:{config.ES_SERVER_PORT}",
+        f"http://{config.ES_SERVER_HOST}:9200",  # Elasticsearch 기본 HTTP 포트 사용
+        basic_auth=("elastic", "snomed")
+    )
     
     mapping_results = {}
     kg_nodes = []
@@ -108,48 +110,69 @@ async def mapping_to_omop(state: AnalysisGraphState) -> AnalysisGraphState:
     for entity_info in entities_to_map:
         entity_name = entity_info["entity_name"]
         entity_type = entity_info["entity_type"]
+        domain_id = entity_info["domain_id"]
         
         try:
+            # 도메인에 맞는 인덱스 선택
+            es_index = get_es_index(domain_id)
+            logger.info(f"검색할 인덱스: {es_index}, 엔티티: {entity_name}")
+            
             # Elasticsearch에서 유사한 개념 검색
+            should_queries = [
+                {
+                    "match": {
+                        "concept_name": {
+                            "query": entity_name,
+                            "boost": 2.0
+                        }
+                    }
+                },
+                {
+                    "match_phrase": {
+                        "concept_name": {
+                            "query": entity_name,
+                            "boost": 3.0
+                        }
+                    }
+                }
+            ]
+            
+            # concept_id가 있는 경우에만 term 쿼리 추가
+            if entity_info.get("concept_id"):
+                should_queries.append({
+                    "term": {
+                        "concept_id": {
+                            "value": entity_info["concept_id"],
+                            "boost": 5.0
+                        }
+                    }
+                })
+            
             query = {
                 "query": {
                     "bool": {
-                        "should": [
-                            {
-                                "match": {
-                                    "concept_name": {
-                                        "query": entity_name,
-                                        "boost": 2.0
-                                    }
-                                }
-                            },
-                            {
-                                "match_phrase": {
-                                    "concept_name": {
-                                        "query": entity_name,
-                                        "boost": 3.0
-                                    }
-                                }
-                            }
-                        ],
+                        "should": should_queries,
                         "minimum_should_match": 1
                     }
                 },
                 "size": 5
             }
             
+            logger.info(f"Elasticsearch 쿼리: {json.dumps(query, indent=2)}")
             response = es.search(
-                index="omop_concepts",
+                index=es_index,
                 body=query
             )
             
             hits = response["hits"]["hits"]
+            logger.info(f"검색 결과 hits 수: {len(hits)}")
             
             if hits:
                 # 가장 높은 점수의 매핑 선택
                 best_match = hits[0]
                 score = best_match["_score"]
                 source = best_match["_source"]
+                logger.info(f"최고 점수 매핑: {source.get('concept_name')} (점수: {score})")
                 
                 omop_mapping = OMOPMapping(
                     concept_id=source["concept_id"],
@@ -173,6 +196,7 @@ async def mapping_to_omop(state: AnalysisGraphState) -> AnalysisGraphState:
                     "kg_node": kg_node.__dict__
                 })
             else:
+                logger.warning(f"매핑 실패: {entity_name}에 대한 검색 결과가 없습니다.")
                 # 매핑 실패 시 기본 정보로 노드 생성
                 omop_mapping = OMOPMapping(
                     concept_id=f"UNMAPPED_{hash(entity_name) % 1000000}",
@@ -268,6 +292,35 @@ def get_omop_domain(entity_type: str) -> str:
         "procedures": "Procedure"
     }
     return domain_mapping.get(entity_type, "Observation")
+
+def get_es_index(domain_id: str) -> str:
+    """도메인 ID에 따른 Elasticsearch 인덱스 반환"""
+    index_mapping = {
+        "Drug": "concept-drug",
+        "Condition": "concept-condition",
+        "Measurement": "concept-measurement",
+        "Procedure": "concept-procedure",
+        "Observation": "concept-observation",
+        "Device": "concept-device",
+        "Visit": "concept-visit",
+        "Gender": "concept-gender",
+        "Race": "concept-race",
+        "Ethnicity": "concept-ethnicity",
+        "Language": "concept-language",
+        "Currency": "concept-currency",
+        "Specimen": "concept-specimen",
+        "Route": "concept-route",
+        "Unit": "concept-unit",
+        "Cost": "concept-cost",
+        "Revenue Code": "concept-revenue_code",
+        "Note": "concept-note",
+        "Payer": "concept-payer",
+        "Sponsor": "concept-sponsor",
+        "Provider": "concept-provider",
+        "Plan": "concept-plan",
+        "Episode": "concept-episode"
+    }
+    return index_mapping.get(domain_id, "concept-condition")  # 기본값으로 concept-condition 사용
 
 def get_omop_vocabulary(entity_type: str) -> str:
     """엔티티 타입에 따른 OMOP 어휘 반환"""

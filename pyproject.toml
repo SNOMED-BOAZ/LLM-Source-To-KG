@@ -21,6 +21,8 @@ json-repair = "^0.44.1"
 graphviz = "^0.20.3"
 elasticsearch = "^9.0.1"
 protobuf = "^5.0.0"
+pytest = "^8.4.0"
+pytest-asyncio = "^1.0.0"
 
 [tool.poetry.scripts]
 test-gemini = "llm_source_to_kg.test.test_gemini:main"
