@@ -38,10 +38,20 @@ class CohortValidator:
         try:
             # NLI 모델 로드 (facebook/bart-large-mnli)
             self.logger.info("Loading NLI model...")
+            
+            # 애플 실리콘 맥북에서 MPS 사용, 그 외에는 CPU 사용
+            import torch
+            if torch.backends.mps.is_available():
+                device = 0  # MPS 사용
+                self.logger.info("Using MPS device for NLI model")
+            else:
+                device = -1  # CPU 사용
+                self.logger.info("Using CPU device for NLI model")
+            
             self.nli_model = pipeline(
                 "zero-shot-classification",
                 model="facebook/bart-large-mnli",
-                device=-1  # CPU 사용
+                device=device
             )
             self.logger.info("NLI model loaded successfully")
             
@@ -491,8 +501,8 @@ async def validate_cohort(state: CohortGraphState) -> CohortGraphState:
             "validation_summary": details,
             "method": "BM25_based"
         }
-        
         logger.info(f"BM25-based validation completed. Result: {is_valid}, Confidence: {confidence_score:.3f}")
+
         return state
         
     except Exception as e:
