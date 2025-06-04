@@ -98,6 +98,18 @@
     "etc": "추가 정보"
 }
 ```
+{
+    source: {
+        source_name,
+        ...
+
+    }
+    target: {
+
+    }
+    relationship_name: ''
+}
+
 
 중요 참고:
 1. 항상 원본 문서 내용을 우선하여 분석하세요.
