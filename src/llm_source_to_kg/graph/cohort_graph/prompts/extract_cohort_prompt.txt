@@ -17,28 +17,51 @@ Read the provided guideline. From it, define **3 to 5 high-level main cohort the
             "subject": "Sub-cohort title",
             "details": "Detailed sub-group use case"
           },
-          "inclusion_criteria": ["..."],
-          "exclusion_criteria": ["..."],
+          "inclusion_criteria": [
+            ["condition a", "condition b", ...],
+            ["condition c", ...],
+            "... additional condition groups as needed ..."
+          ],
+          "exclusion_criteria": [
+            ["condition a", "condition b", ...],
+            ["condition c", ...],
+            "... additional condition groups as needed ..."
+          ],
           "source_sentences": ["Original sentence from the guideline...", "..."]
         }
       ]
     }
   ]
 }
+```
+
+## Schema Description
+- **main_cohorts**: Array of main cohort objects representing broad clinical themes
+- **subject**: String title for the main cohort or sub-cohort
+- **details**: String with expanded description of the clinical theme or use case
+- **sub_cohorts**: Array of sub-cohort objects representing specific clinical scenarios
+- **description**: Object containing subject and details for each sub-cohort
+- **inclusion_criteria**: Array of arrays representing logical OR groups, where each inner array contains AND conditions
+- **exclusion_criteria**: Array of arrays with same logical structure as inclusion_criteria
+- **source_sentences**: Array of strings containing exact text from the original guideline
 
 ## Extraction Guidelines
-- Main cohorts should correspond to broad themes such as:
-- “Cardiovascular disease risk assessment”
-- “Statin-based lipid lowering”
-- “Secondary prevention for people with CVD”
+- Main cohorts should correspond to broad clinical themes derived from the specific guideline content
 - Sub-cohorts must contain:
-- At least one of: drug name, diagnosis, test with cutoff, procedure, or time logic
-- Explicit inclusion_criteria and source_sentences
-- Avoid listing general population statements unless they are clearly tied to a clinical recommendation.
-- Do not paraphrase source sentences.
-- Output only one JSON block.
+  - At least one of: drug name, diagnosis, test with cutoff, procedure, or time logic
+  - Explicit inclusion_criteria and exclusion_criteria with logical structure
+  - Direct source_sentences from the guideline
+- For criteria logical structure:
+  - Outer array represents OR relationships between condition groups
+  - Inner arrays represent AND relationships within each condition group
+  - Single conditions should be placed in their own inner array
+  - Each condition should be a clear, specific clinical criterion
+  - Number of condition groups should reflect the actual clinical logic in the guideline
+- Avoid listing general population statements unless they are clearly tied to a clinical recommendation
+- Do not paraphrase source sentences - use exact text from the guideline
+- Output only one JSON block
 
 ## Purpose
-This output supports downstream deep analysis nodes which will extract concept-relation triples (e.g., statin → for → QRISK ≥10%) and temporal constraints, for integration into a clinical knowledge graph.
+This output supports downstream deep analysis nodes which will extract concept-relation triples and temporal constraints, for integration into a clinical knowledge graph.
 
 Begin extraction now.
