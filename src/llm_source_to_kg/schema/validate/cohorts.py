@@ -48,6 +48,44 @@ def validate_cohort_schema(cohorts_json: Dict[str, Any]) -> tuple[bool, List[str
     
     return len(errors) == 0, errors
 
+def _validate_criteria_structure(criteria: List[List[str]], field_name: str, cohort_index: int, sub_index: int) -> List[str]:
+    """
+    중첩 배열 구조의 criteria를 검증합니다.
+    
+    Args:
+        criteria: 검증할 criteria 배열 (배열의 배열 구조)
+        field_name: 필드명 ("inclusion_criteria" 또는 "exclusion_criteria")
+        cohort_index: 상위 코호트 인덱스
+        sub_index: 서브 코호트 인덱스
+        
+    Returns:
+        List[str]: 오류 메시지 목록
+    """
+    errors = []
+    
+    if not isinstance(criteria, list):
+        errors.append(f"Cohort {cohort_index}, Sub-cohort {sub_index}: '{field_name}' must be a list")
+        return errors
+    
+    # 각 OR 그룹 (outer array) 검증
+    for i, and_group in enumerate(criteria):
+        if not isinstance(and_group, list):
+            errors.append(f"Cohort {cohort_index}, Sub-cohort {sub_index}: '{field_name}[{i}]' must be a list")
+            continue
+        
+        if len(and_group) == 0:
+            errors.append(f"Cohort {cohort_index}, Sub-cohort {sub_index}: '{field_name}[{i}]' cannot be empty")
+            continue
+        
+        # 각 AND 조건 (inner array elements) 검증
+        for j, condition in enumerate(and_group):
+            if not isinstance(condition, str):
+                errors.append(f"Cohort {cohort_index}, Sub-cohort {sub_index}: '{field_name}[{i}][{j}]' must be a string")
+            elif not condition.strip():
+                errors.append(f"Cohort {cohort_index}, Sub-cohort {sub_index}: '{field_name}[{i}][{j}]' cannot be empty")
+    
+    return errors
+
 def _validate_sub_cohort_schema(sub_cohort: Dict[str, Any], cohort_index: int, sub_index: int) -> List[str]:
     """
     서브 코호트의 스키마를 검증합니다.
@@ -82,16 +120,29 @@ def _validate_sub_cohort_schema(sub_cohort: Dict[str, Any], cohort_index: int, s
             if "details" in description and not isinstance(description["details"], str):
                 errors.append(f"Cohort {cohort_index}, Sub-cohort {sub_index}: 'details' in description must be a string")
     
-    # 선택적 필드들 검증
-    optional_list_fields = ["inclusion_criteria", "exclusion_criteria", "source_sentences"]
-    for field in optional_list_fields:
-        if field in sub_cohort:
-            if not isinstance(sub_cohort[field], list):
-                errors.append(f"Cohort {cohort_index}, Sub-cohort {sub_index}: '{field}' must be a list")
-            else:
-                # 리스트 요소들이 문자열인지 검증
-                for k, item in enumerate(sub_cohort[field]):
-                    if not isinstance(item, str):
-                        errors.append(f"Cohort {cohort_index}, Sub-cohort {sub_index}: '{field}[{k}]' must be a string")
+    # inclusion_criteria 검증 (선택적, 새로운 중첩 배열 구조)
+    if "inclusion_criteria" in sub_cohort:
+        criteria_errors = _validate_criteria_structure(
+            sub_cohort["inclusion_criteria"], "inclusion_criteria", cohort_index, sub_index
+        )
+        errors.extend(criteria_errors)
+    
+    # exclusion_criteria 검증 (선택적, 새로운 중첩 배열 구조)
+    if "exclusion_criteria" in sub_cohort:
+        criteria_errors = _validate_criteria_structure(
+            sub_cohort["exclusion_criteria"], "exclusion_criteria", cohort_index, sub_index
+        )
+        errors.extend(criteria_errors)
+    
+    # source_sentences 검증 (선택적, 기존 구조 유지)
+    if "source_sentences" in sub_cohort:
+        source_sentences = sub_cohort["source_sentences"]
+        if not isinstance(source_sentences, list):
+            errors.append(f"Cohort {cohort_index}, Sub-cohort {sub_index}: 'source_sentences' must be a list")
+        else:
+            # 리스트 요소들이 문자열인지 검증
+            for k, sentence in enumerate(source_sentences):
+                if not isinstance(sentence, str):
+                    errors.append(f"Cohort {cohort_index}, Sub-cohort {sub_index}: 'source_sentences[{k}]' must be a string")
     
     return errors 
