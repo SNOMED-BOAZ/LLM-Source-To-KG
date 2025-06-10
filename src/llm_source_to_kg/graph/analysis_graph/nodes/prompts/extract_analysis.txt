@@ -15,83 +15,77 @@
 항상 원본 문서 내용을 주요 분석 근거로 사용하여 최대한 정확하고 포괄적으로 분석하세요.  
 매니저의 분석은 참고용으로만 활용하고, 반드시 원본 텍스트를 바탕으로 직접 철저히 분석해야 합니다.
 
-## 분석 요구 사항:
+## 분석 요구사항:
 
 1. DRUG 엔티티:
     - 약물 이름, 용량, 투여 방법 등을 식별하세요.
-    - OMOP CDM concept_name, concept_id, domain_id, vocabulary_id, concept_code를 매핑하세요.
-    - standard_concept 값을 'S'(Standard) 또는 'C'(Classification)로 지정하세요.
+    - OMOP CDM concept_name, domain_id, vocabulary_id 매핑하세요.
     - mapping_confidence를 0.0에서 1.0 사이의 값으로 설정하세요.
+    - 빈 값("")이나 null 값은 JSON에 포함하지 마세요. 값이 없는 필드는 아예 포함시키지 마세요.
+
 
 2. DIAGNOSTIC 엔티티:
     - 질병, 장애, 증상 등을 식별하세요.
-    - OMOP CDM 개념을 매핑하세요.
-    - 가능한 경우 ICD 코드와 SNOMED 코드를 포함하세요.
-    - standard_concept와 mapping_confidence를 설정하세요.
+    - OMOP CDM concept_name과 domain_id를 매핑하세요.
+    - mapping_confidence를 0.0에서 1.0 사이의 값으로 설정하세요.
+    - source_text_span에 원본 텍스트 인용을 포함하세요.
+    - 빈 값("")이나 null 값은 JSON에 포함하지 마세요. 값이 없는 필드는 아예 포함시키지 마세요.
 
 3. TEST 엔티티:
     - 검사, 측정, 평가 등을 식별하세요.
     - test_name, operator(=, >, >=, <, <=), value, unit을 포함하세요.
-    - OMOP CDM 개념을 매핑하세요.
-    - standard_concept와 mapping_confidence를 설정하세요.
+    - OMOP CDM concept_name과 domain_id를 매핑하세요.
+    - mapping_confidence를 0.0에서 1.0 사이의 값으로 설정하세요.
+    - source_text_span에 원본 텍스트 인용을 포함하세요.
+    - 빈 값("")이나 null 값은 JSON에 포함하지 마세요. 값이 없는 필드는 아예 포함시키지 마세요.
 
 4. SURGERY 엔티티:
     - 수술, 시술, 처치 등을 식별하세요.
     - surgery_name을 포함하세요.
-    - OMOP CDM 개념을 매핑하세요.
-    - standard_concept와 mapping_confidence를 설정하세요.
+    - OMOP CDM concept_name, domain_id, vocabulary_id를 매핑하세요.
+    - mapping_confidence를 0.0에서 1.0 사이의 값으로 설정하세요.
+    - 빈 값("")이나 null 값은 JSON에 포함하지 마세요. 값이 없는 필드는 아예 포함시키지 마세요.
 
 5. 추가 정보:
     - temporal_relation: 시간적 관계가 있다면 명시하세요.
     - source_text_span: 원본 텍스트에서 해당 엔티티를 찾은 부분을 인용하세요.
     - etc: 위 카테고리에 속하지 않는 추가 정보가 있다면 포함하세요.
+    - 빈 값("")이나 null 값은 JSON에 포함하지 마세요. 값이 없는 필드는 아예 포함시키지 마세요.
 
 ## 출력 JSON 형식:
 ```json
 {
     "drug": {
         "concept_name": "OMOP CDM 약물 개념명",
-        "concept_id": 1234567,
         "domain_id": "Drug",
         "vocabulary_id": "RxNorm",
-        "concept_code": "12345",
-        "standard_concept": "S",
         "mapping_confidence": 0.95,
-        "drug_name": "약물 상세 이름"
+        "drug_name": "약물 상세 이름",
+        "source_text_span": "원본 텍스트 인용"
     },
     "diagnostic": {
         "concept_name": "OMOP CDM 진단 개념명",
-        "concept_id": 7654321,
         "domain_id": "Condition",
-        "vocabulary_id": "SNOMED",
-        "concept_code": "67890",
-        "standard_concept": "S",
         "mapping_confidence": 0.9,
-        "icd_code": "ICD-10 코드",
-        "snomed_code": "SNOMED 코드"
+        "source_text_span": "원본 텍스트 인용"
     },
     "test": {
         "concept_name": "OMOP CDM 검사 개념명",
-        "concept_id": 9876543,
         "domain_id": "Measurement",
-        "vocabulary_id": "LOINC",
-        "concept_code": "54321",
-        "standard_concept": "S",
         "mapping_confidence": 0.85,
         "test_name": "검사 상세 이름",
         "operator": ">",
         "value": 100.0,
-        "unit": "mg/dL"
+        "unit": "mg/dL",
+        "source_text_span": "원본 텍스트 인용"
     },
     "surgery": {
         "concept_name": "OMOP CDM 수술 개념명",
-        "concept_id": 1357924,
         "domain_id": "Procedure",
         "vocabulary_id": "SNOMED",
-        "concept_code": "24680",
-        "standard_concept": "S",
         "mapping_confidence": 0.95,
-        "surgery_name": "수술 상세 이름"
+        "surgery_name": "수술 상세 이름",
+        "source_text_span": "원본 텍스트 인용"
     },
     "temporal_relation": "시간적 관계 설명",
     "source_text_span": "원본 텍스트 인용",
@@ -119,3 +113,10 @@
 5. 포괄적이면서도 정확하게 정보를 추출하세요.
 6. 가능한 모든 JSON 필드를 문서 기반으로 채워야 합니다.
 7. OMOP CDM 매핑이 불확실한 경우 mapping_confidence를 낮게 설정하세요.
+8. 빈 값("")이나 null 값은 JSON에 포함하지 마세요. 값이 없는 필드는 아예 포함하지 않아야 합니다.
+9. 각 엔티티는 반드시 다음 필드만 포함해야 합니다:
+   - drug: concept_name, domain_id, vocabulary_id, mapping_confidence, drug_name, source_text_span
+   - diagnostic: concept_name, domain_id, mapping_confidence, source_text_span
+   - test: concept_name, domain_id, mapping_confidence, test_name, operator, value, unit, source_text_span
+   - surgery: concept_name, domain_id, vocabulary_id, mapping_confidence, surgery_name, source_text_span
+   - temporal_relation, source_text_span, etc (해당되는 경우에만)
