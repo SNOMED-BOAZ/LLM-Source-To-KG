@@ -39,13 +39,14 @@ async def mapping_to_omop(state: AnalysisGraphState) -> AnalysisGraphState:
     Returns:
         업데이트된 그래프 상태 (mapping_result와 kg_nodes 필드 포함)
     """
+
     analysis = state["analysis"]
     
     # Elasticsearch 클라이언트 설정
     es = Elasticsearch(
         #f"http://{config.ES_SERVER_HOST}:{config.ES_SERVER_PORT}",
-        f"http://{config.ES_SERVER_HOST}:9200",  # Elasticsearch 기본 HTTP 포트 사용
-        basic_auth=("elastic", "snomed")
+        f"http://{config.ES_SERVER_HOST}:{config.ES_SERVER_PORT}",  # Elasticsearch 기본 HTTP 포트 사용
+        basic_auth=(config.ES_SERVER_USERNAME, config.ES_SERVER_PASSWORD)
     )
     
     mapping_results = {}
@@ -67,6 +68,7 @@ async def mapping_to_omop(state: AnalysisGraphState) -> AnalysisGraphState:
     # 약물 관련 엔티티 추출
     if "drug" in analysis and analysis["drug"]:
         drug = analysis["drug"]
+
         entities_to_map.append({
             "entity_type": "drug",
             "entity_name": drug["concept_name"],
@@ -120,39 +122,35 @@ async def mapping_to_omop(state: AnalysisGraphState) -> AnalysisGraphState:
             # Elasticsearch에서 유사한 개념 검색
             should_queries = [
                 {
-                    "match": {
-                        "concept_name": {
-                            "query": entity_name,
-                            "boost": 2.0
-                        }
-                    }
-                },
-                {
-                    "match_phrase": {
-                        "concept_name": {
-                            "query": entity_name,
-                            "boost": 3.0
+                    "term": {
+                        "concept_name.keyword": {
+                            "value": entity_name,
+                            "boost": 5
                         }
                     }
                 }
             ]
-            
-            # concept_id가 있는 경우에만 term 쿼리 추가
-            if entity_info.get("concept_id"):
-                should_queries.append({
-                    "term": {
-                        "concept_id": {
-                            "value": entity_info["concept_id"],
-                            "boost": 5.0
+
+            must_queries = [
+                {
+                    "match": {
+                        "concept_name": {
+                            "query": entity_name
                         }
                     }
-                })
+                },
+                {
+                    "term": {
+                        "standard_concept.keyword": "S"
+                    }
+                }
+            ]
             
             query = {
                 "query": {
                     "bool": {
+                        "must": must_queries,
                         "should": should_queries,
-                        "minimum_should_match": 1
                     }
                 },
                 "size": 5
@@ -359,21 +357,40 @@ def get_omop_concept_class(entity_type: str) -> str:
 async def main():
     """테스트를 위한 메인 함수"""
     # 테스트용 상태 객체 생성
+    # test_state = {
+    #     "analysis": {
+    #         "cohort_analyses": {
+    #             "test_cohort": {
+    #                 "status": "success",
+    #                 "entities": {
+    #                     "diagnostic": ["Cardiovascular disease", "High risk of CVD"],
+    #                     "drug": ["Atorvastatin", "Statin therapy"],
+    #                     "medicalTest": ["QRISK3 score", "Lipid profile"]
+    #                 }
+    #             }
+    #         }
+    #     }
+    # }
+
     test_state = {
         "analysis": {
-            "cohort_analyses": {
-                "test_cohort": {
-                    "status": "success",
-                    "entities": {
-                        "diagnostic": ["Cardiovascular disease", "High risk of CVD"],
-                        "drug": ["Atorvastatin", "Statin therapy"],
-                        "medicalTest": ["QRISK3 score", "Lipid profile"]
-                    }
-                }
-            }
+            "drug": {
+                "concept_name": 'Atorvastatin',
+                "domain_id": 'Drug',
+                "vocabulary_id": 'test1',
+            },
+            "diagnostic": {
+                "concept_name": 'Cardiovascular disease',
+                "domain_id": 'TEST',
+                "vocabulary_id": 'test2',
+            },
+            "medicalTest": {
+                "concept_name": 'QRISK3 score',
+                "domain_id": 'TEST',
+                "vocabulary_id": 'test3',
+            },
         }
     }
-    
     # 매핑 실행
     result_state = await mapping_to_omop(test_state)
     

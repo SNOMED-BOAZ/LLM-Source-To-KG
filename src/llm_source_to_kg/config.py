@@ -18,6 +18,14 @@ class Config:
     if not ES_SERVER_PORT:
         raise ValueError("ES_SERVER_PORT is not set")
 
+    ES_SERVER_USERNAME = os.getenv("ES_SERVER_USERNAME")
+    if not ES_SERVER_USERNAME:
+        raise ValueError("ES_SERVER_USERNAME is not set")
+
+    ES_SERVER_PASSWORD = os.getenv("ES_SERVER_PASSWORD")
+    if not ES_SERVER_PASSWORD:
+        raise ValueError("ES_SERVER_PASSWORD is not set")
+
     GRPC_SERVER_PORT = os.getenv("GRPC_SERVER_PORT")
     if not GRPC_SERVER_PORT:
         raise ValueError("GRPC_SERVER_PORT is not set")
