@@ -18,3 +18,6 @@ class AnalysisGraphState(TypedDict):
 
     cohort: Annotated[str, 'cohort markdown to analyze']
     analysis: Annotated[Dict[str, Any], 'analysis result']
+
+    mapping_result: Annotated[Dict[str, Any], 'mapping result']
+    kg_nodes: Annotated[List[Dict[str, Any]], 'kg nodes']
