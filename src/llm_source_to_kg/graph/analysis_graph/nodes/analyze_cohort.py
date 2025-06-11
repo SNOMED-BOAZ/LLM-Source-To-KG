@@ -93,23 +93,19 @@ def convert_to_schema(entity: Dict[str, Any], entity_type: str) -> BaseModel:
         raise
 
 def validate_entity_structure(entity: Dict[str, Any], entity_type: str) -> Dict[str, Any]:
-    """엔티티 구조를 검증하고 정제합니다."""
-    logger.debug(f"Validating {entity_type} entity structure")
+    """엔티티 구조를 검증하고 필요한 필드를 추가합니다."""
+    logger.debug(f"Validating entity structure for {entity_type}")
     
     if entity_type == "drug":
-        required_fields = ["concept_name", "concept_id", "domain_id", "vocabulary_id", 
-                         "concept_code", "standard_concept", "mapping_confidence", "drug_name"]
+        required_fields = ["concept_name", "domain_id", "vocabulary_id", "mapping_confidence", "drug_name", "source_text_span"]
         for field in required_fields:
             if field not in entity:
                 if field == "mapping_confidence":
                     entity[field] = 0.0
                     logger.debug(f"Added default mapping_confidence for drug entity")
-                elif field == "drug_name":
-                    entity[field] = None
-                    logger.debug(f"Added default drug_name for drug entity")
                 else:
-                    entity[field] = ""
-                    logger.debug(f"Added empty {field} for drug entity")
+                    logger.error(f"Missing required field {field} for drug entity")
+                    raise ValidationError(f"Missing required field {field} for drug entity")
         
         # DrugSchema로 변환 시도
         try:
@@ -120,20 +116,15 @@ def validate_entity_structure(entity: Dict[str, Any], entity_type: str) -> Dict[
             raise
     
     elif entity_type == "diagnostic":
-        required_fields = ["concept_name", "concept_id", "domain_id", "vocabulary_id", 
-                         "concept_code", "standard_concept", "mapping_confidence", 
-                         "icd_code", "snomed_code"]
+        required_fields = ["concept_name", "domain_id", "mapping_confidence", "source_text_span"]
         for field in required_fields:
             if field not in entity:
                 if field == "mapping_confidence":
                     entity[field] = 0.0
                     logger.debug(f"Added default mapping_confidence for diagnostic entity")
-                elif field in ["icd_code", "snomed_code"]:
-                    entity[field] = None
-                    logger.debug(f"Added default {field} for diagnostic entity")
                 else:
-                    entity[field] = ""
-                    logger.debug(f"Added empty {field} for diagnostic entity")
+                    logger.error(f"Missing required field {field} for diagnostic entity")
+                    raise ValidationError(f"Missing required field {field} for diagnostic entity")
         
         # DiagnosticSchema로 변환 시도
         try:
@@ -144,23 +135,18 @@ def validate_entity_structure(entity: Dict[str, Any], entity_type: str) -> Dict[
             raise
     
     elif entity_type == "test":
-        required_fields = ["concept_name", "concept_id", "domain_id", "vocabulary_id", 
-                         "concept_code", "standard_concept", "mapping_confidence",
-                         "test_name", "operator", "value", "unit"]
+        required_fields = ["concept_name", "domain_id", "mapping_confidence", "test_name", "operator", "value", "unit", "source_text_span"]
         for field in required_fields:
             if field not in entity:
                 if field == "mapping_confidence":
                     entity[field] = 0.0
                     logger.debug(f"Added default mapping_confidence for test entity")
-                elif field == "value":
-                    entity[field] = 0.0
-                    logger.debug(f"Added default value for test entity")
-                elif field == "operator":
-                    entity[field] = "="
-                    logger.debug(f"Added default operator for test entity")
+                elif field in ["operator", "value", "unit"]:
+                    entity[field] = None
+                    logger.debug(f"Added null {field} for test entity")
                 else:
-                    entity[field] = ""
-                    logger.debug(f"Added empty {field} for test entity")
+                    logger.error(f"Missing required field {field} for test entity")
+                    raise ValidationError(f"Missing required field {field} for test entity")
         
         # MedicalTestSchema로 변환 시도
         try:
@@ -171,16 +157,15 @@ def validate_entity_structure(entity: Dict[str, Any], entity_type: str) -> Dict[
             raise
     
     elif entity_type == "surgery":
-        required_fields = ["concept_name", "concept_id", "domain_id", "vocabulary_id", 
-                         "concept_code", "standard_concept", "mapping_confidence", "surgery_name"]
+        required_fields = ["concept_name", "domain_id", "vocabulary_id", "mapping_confidence", "surgery_name", "source_text_span"]
         for field in required_fields:
             if field not in entity:
                 if field == "mapping_confidence":
                     entity[field] = 0.0
                     logger.debug(f"Added default mapping_confidence for surgery entity")
                 else:
-                    entity[field] = ""
-                    logger.debug(f"Added empty {field} for surgery entity")
+                    logger.error(f"Missing required field {field} for surgery entity")
+                    raise ValidationError(f"Missing required field {field} for surgery entity")
         
         # SurgerySchema로 변환 시도
         try:
