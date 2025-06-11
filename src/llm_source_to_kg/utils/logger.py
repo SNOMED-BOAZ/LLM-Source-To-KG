@@ -74,6 +74,7 @@ class Logger:
         log_file: Optional[Union[str, Path]] = None,
         console_output: bool = True,
         file_output: bool = True,
+        propagate: bool = False,
     ):
         """
         로거 초기화
@@ -85,6 +86,7 @@ class Logger:
             log_file: 로그 파일 경로 (None인 경우 자동 생성)
             console_output: 콘솔 출력 여부
             file_output: 파일 출력 여부
+            propagate: 상위 로거로 로그 전파 여부
         """
         # Python 내장 로깅 시스템의 로거를 가져옴 (이미 존재하면 재사용)
         self.logger = logging.getLogger(name)
@@ -93,6 +95,7 @@ class Logger:
         # 이미 설정된 로거인지 확인 (중복 설정 방지)
         if name not in self._configured_loggers:
             self.logger.setLevel(level)
+            self.logger.propagate = propagate  # 로그 전파 설정
             # 기존 핸들러 제거 (첫 설정 시에만)
             self.logger.handlers = []
             
@@ -204,6 +207,7 @@ def get_logger(
     console_output: bool = True,
     file_output: bool = True,
     force_new: bool = False,
+    propagate: bool = False,
 ) -> Logger:
     """
     이름에 해당하는 로거 인스턴스를 가져옵니다.
@@ -217,6 +221,7 @@ def get_logger(
         console_output: 콘솔 출력 여부
         file_output: 파일 출력 여부 (기본값 True로 변경)
         force_new: 새 로거 인스턴스 강제 생성 여부
+        propagate: 상위 로거로 로그 전파 여부
     
     Returns:
         Logger 인스턴스
@@ -232,6 +237,7 @@ def get_logger(
             log_file=log_file,
             console_output=console_output,
             file_output=file_output,
+            propagate=propagate,
         )
     
     return _logger_cache[name]

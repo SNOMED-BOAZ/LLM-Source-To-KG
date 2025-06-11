@@ -11,8 +11,8 @@ from src.llm_source_to_kg.graph.analysis_graph.nodes import (
 from llm_source_to_kg.utils.logger import get_logger
 import json
 
-# 전역 로거 초기화
-logger = get_logger("analysis_graph")
+# 전역 로거 초기화 - 중복 로깅 방지를 위해 propagate=False 설정
+logger = get_logger("analysis_graph", propagate=False)
 
 MAX_RETRIES = 3
 
