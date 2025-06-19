@@ -125,7 +125,7 @@ async def mapping_to_omop(state: AnalysisGraphState) -> AnalysisGraphState:
                     "term": {
                         "concept_name.keyword": {
                             "value": entity_name,
-                            "boost": 5
+                            "boost": 500
                         }
                     }
                 }
@@ -138,22 +138,39 @@ async def mapping_to_omop(state: AnalysisGraphState) -> AnalysisGraphState:
                             "query": entity_name
                         }
                     }
-                },
-                {
-                    "term": {
-                        "standard_concept.keyword": "S"
-                    }
                 }
+                # {
+                #     "term": {
+                #         "standard_concept.keyword": "S"
+                #     }
+                # }
             ]
             
             query = {
-                "query": {
+              "query": {
+                "function_score": {
+                  "query": {
                     "bool": {
-                        "must": must_queries,
-                        "should": should_queries,
+                      "must": must_queries,
+                      "should": should_queries
                     }
-                },
-                "size": 5
+                  },
+                  "functions": [
+                    {
+                      "gauss": {
+                        "concept_name_length": {
+                          "origin": len(entity_name),
+                          "scale": "1",
+                          "decay": 0.9
+                        }
+                      },
+                      "weight": 60
+                    }
+                  ],
+                  "boost_mode": "sum",
+                  "score_mode": "sum"
+                }
+              }
             }
             
             logger.info(f"Elasticsearch 쿼리: {json.dumps(query, indent=2)}")
@@ -164,7 +181,7 @@ async def mapping_to_omop(state: AnalysisGraphState) -> AnalysisGraphState:
             
             hits = response["hits"]["hits"]
             logger.info(f"검색 결과 hits 수: {len(hits)}")
-            
+
             if hits:
                 # 가장 높은 점수의 매핑 선택
                 best_match = hits[0]
@@ -375,7 +392,7 @@ async def main():
     test_state = {
         "analysis": {
             "drug": {
-                "concept_name": 'Atorvastatin',
+                "concept_name": 'atorvastatin',
                 "domain_id": 'Drug',
                 "vocabulary_id": 'test1',
             },
