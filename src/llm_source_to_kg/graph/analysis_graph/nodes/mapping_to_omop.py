@@ -164,7 +164,7 @@ async def mapping_to_omop(state: AnalysisGraphState) -> AnalysisGraphState:
                           "decay": 0.9
                         }
                       },
-                      "weight": 60
+                      "weight": 30
                     }
                   ],
                   "boost_mode": "sum",
