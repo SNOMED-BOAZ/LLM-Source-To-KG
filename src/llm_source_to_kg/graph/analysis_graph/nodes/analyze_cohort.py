@@ -88,7 +88,7 @@ def convert_to_schema(entity: Dict[str, Any], entity_type: str) -> BaseModel:
             return SurgerySchema(**entity)
         else:
             raise ValueError(f"Unknown entity type: {entity_type}")
-    except ValidationError as e:
+    except ValueError as e:
         logger.error(f"Schema validation error for {entity_type}: {str(e)}")
         raise
 
@@ -105,13 +105,13 @@ def validate_entity_structure(entity: Dict[str, Any], entity_type: str) -> Dict[
                     logger.debug(f"Added default mapping_confidence for drug entity")
                 else:
                     logger.error(f"Missing required field {field} for drug entity")
-                    raise ValidationError(f"Missing required field {field} for drug entity")
+                    raise ValueError(f"Missing required field {field} for drug entity")
         
         # DrugSchema로 변환 시도
         try:
             drug_schema = convert_to_schema(entity, "drug")
             return drug_schema
-        except ValidationError as e:
+        except ValueError as e:
             logger.error(f"Drug schema validation failed: {str(e)}")
             raise
     
@@ -124,13 +124,13 @@ def validate_entity_structure(entity: Dict[str, Any], entity_type: str) -> Dict[
                     logger.debug(f"Added default mapping_confidence for diagnostic entity")
                 else:
                     logger.error(f"Missing required field {field} for diagnostic entity")
-                    raise ValidationError(f"Missing required field {field} for diagnostic entity")
+                    raise ValueError(f"Missing required field {field} for diagnostic entity")
         
         # DiagnosticSchema로 변환 시도
         try:
             diagnostic_schema = convert_to_schema(entity, "diagnostic")
             return diagnostic_schema
-        except ValidationError as e:
+        except ValueError as e:
             logger.error(f"Diagnostic schema validation failed: {str(e)}")
             raise
     
@@ -146,13 +146,13 @@ def validate_entity_structure(entity: Dict[str, Any], entity_type: str) -> Dict[
                     logger.debug(f"Added null {field} for test entity")
                 else:
                     logger.error(f"Missing required field {field} for test entity")
-                    raise ValidationError(f"Missing required field {field} for test entity")
+                    raise ValueError(f"Missing required field {field} for test entity")
         
         # MedicalTestSchema로 변환 시도
         try:
             test_schema = convert_to_schema(entity, "test")
             return test_schema
-        except ValidationError as e:
+        except ValueError as e:
             logger.error(f"Test schema validation failed: {str(e)}")
             raise
     
@@ -165,13 +165,13 @@ def validate_entity_structure(entity: Dict[str, Any], entity_type: str) -> Dict[
                     logger.debug(f"Added default mapping_confidence for surgery entity")
                 else:
                     logger.error(f"Missing required field {field} for surgery entity")
-                    raise ValidationError(f"Missing required field {field} for surgery entity")
+                    raise ValueError(f"Missing required field {field} for surgery entity")
         
         # SurgerySchema로 변환 시도
         try:
             surgery_schema = convert_to_schema(entity, "surgery")
             return surgery_schema
-        except ValidationError as e:
+        except ValueError as e:
             logger.error(f"Surgery schema validation failed: {str(e)}")
             raise
     
@@ -199,7 +199,7 @@ def validate_analysis_schema(analysis: Dict[str, Any]) -> Dict[str, Any]:
                     logger.debug(f"Using first item from {entity_type} entity list")
                 
                 validated[entity_type] = validate_entity_structure(entity, entity_type)
-            except ValidationError as e:
+            except ValueError as e:
                 logger.error(f"Validation failed for {entity_type}: {str(e)}")
                 validated[entity_type] = None
         else:
@@ -217,7 +217,7 @@ def validate_analysis_schema(analysis: Dict[str, Any]) -> Dict[str, Any]:
         analysis_schema = AnalysisSchema(**validated)
         logger.info("Analysis schema validation completed successfully")
         return validated
-    except ValidationError as e:
+    except ValueError as e:
         logger.error(f"Analysis schema validation failed: {str(e)}")
         raise
 
@@ -330,7 +330,7 @@ Question: {state['question']}
             logger.info("Cohort analysis completed successfully")
             return state
             
-        except ValidationError as e:
+        except ValueError as e:
             logger.error(f"Schema validation failed: {str(e)}")
             state["answer"] = f"Schema validation failed: {str(e)}"
             state["is_valid"] = False

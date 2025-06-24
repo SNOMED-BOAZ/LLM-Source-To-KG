@@ -173,7 +173,7 @@ async def mapping_to_omop(state: AnalysisGraphState) -> AnalysisGraphState:
               }
             }
             
-            logger.info(f"Elasticsearch 쿼리: {json.dumps(query, indent=2)}")
+            # logger.info(f"Elasticsearch 쿼리: {json.dumps(query, indent=2)}")
             response = es.search(
                 index=es_index,
                 body=query
@@ -414,8 +414,8 @@ async def main():
     # 결과 출력
     print("매핑 결과:")
     print(json.dumps(result_state["mapping_result"], indent=2))
-    print("\n지식 그래프 노드:")
-    print(json.dumps([node.__dict__ for node in result_state["kg_nodes"]], indent=2))
+    # print("\n지식 그래프 노드:")
+    # print(json.dumps([node.__dict__ for node in result_state["kg_nodes"]], indent=2))
 
 if __name__ == "__main__":
     asyncio.run(main())

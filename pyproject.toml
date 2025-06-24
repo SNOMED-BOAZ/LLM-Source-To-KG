@@ -34,6 +34,7 @@ test-logger = "llm_source_to_kg.test.test_logger:main"
 test-cohort-graph = "llm_source_to_kg.graph.cohort_graph.orchestrator:main"
 test-cohort-validation = "llm_source_to_kg.test.test_cohort_validation:main"
 test-analysis-graph = "llm_source_to_kg.graph.analysis_graph.orchestrator:main"
+test-full-graph = "llm_source_to_kg.graph.orchestrator:main"
 
 [tool.poetry.group.dev.dependencies]
 ipykernel = "^6.29.5"

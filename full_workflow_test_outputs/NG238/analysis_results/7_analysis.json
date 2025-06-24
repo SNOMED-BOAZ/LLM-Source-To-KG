@@ -1,0 +1,168 @@
+{
+  "source_reference_number": "NG238",
+  "is_valid": true,
+  "retries": 0,
+  "answer": "Analysis completed successfully",
+  "analysis": {
+    "drug": {
+      "concept_name": "Statin",
+      "domain_id": "Drug",
+      "vocabulary_id": "RxNorm",
+      "mapping_confidence": 0.95,
+      "drug_name": "statins",
+      "source_text_span": "on statin therapy"
+    },
+    "diagnostic": {
+      "concept_name": "Cardiovascular Disease",
+      "domain_id": "Condition",
+      "mapping_confidence": 0.9,
+      "source_text_span": "established cardiovascular disease"
+    },
+    "test": {
+      "concept_name": "Non-HDL Cholesterol Measurement",
+      "domain_id": "Measurement",
+      "mapping_confidence": 0.85,
+      "test_name": "Non-HDL cholesterol",
+      "operator": ">=",
+      "value": 2.6,
+      "unit": "mmol/L",
+      "source_text_span": "Non-HDL cholesterol >= 2.6 mmol/L"
+    },
+    "surgery": null
+  },
+  "mapping_result": {
+    "single_cohort": {
+      "status": "success",
+      "mappings": {
+        "all_entities": [
+          {
+            "original_entity": "Cardiovascular Disease",
+            "omop_mapping": {
+              "concept_id": 44827514,
+              "concept_name": "Cardiovascular syphilis",
+              "domain_id": "condition",
+              "vocabulary_id": "ICD9CM",
+              "concept_class_id": "3-dig nonbill code",
+              "standard_concept": null,
+              "confidence_score": 1.0,
+              "source_text": "Cardiovascular Disease"
+            },
+            "mapping_status": "success",
+            "kg_node": {
+              "node_id": 44827514,
+              "node_type": "condition",
+              "properties": {
+                "concept_name": "Cardiovascular syphilis",
+                "vocabulary_id": "ICD9CM",
+                "concept_class_id": "3-dig nonbill code",
+                "standard_concept": null,
+                "confidence_score": 1.0,
+                "source_text": "Cardiovascular Disease"
+              },
+              "relationships": []
+            }
+          },
+          {
+            "original_entity": "Statin",
+            "omop_mapping": {
+              "concept_id": 922570,
+              "concept_name": "nystatin",
+              "domain_id": "drug",
+              "vocabulary_id": "RxNorm",
+              "concept_class_id": "Ingredient",
+              "standard_concept": "S",
+              "confidence_score": 1.0,
+              "source_text": "Statin"
+            },
+            "mapping_status": "success",
+            "kg_node": {
+              "node_id": 922570,
+              "node_type": "drug",
+              "properties": {
+                "concept_name": "nystatin",
+                "vocabulary_id": "RxNorm",
+                "concept_class_id": "Ingredient",
+                "standard_concept": "S",
+                "confidence_score": 1.0,
+                "source_text": "Statin"
+              },
+              "relationships": []
+            }
+          },
+          {
+            "original_entity": "Non-HDL Cholesterol Measurement",
+            "omop_mapping": {
+              "concept_id": 44788717,
+              "concept_name": "Cholesterol content measurement",
+              "domain_id": "measurement",
+              "vocabulary_id": "SNOMED",
+              "concept_class_id": "Procedure",
+              "standard_concept": "S",
+              "confidence_score": 1.0,
+              "source_text": "Non-HDL Cholesterol Measurement"
+            },
+            "mapping_status": "success",
+            "kg_node": {
+              "node_id": 44788717,
+              "node_type": "measurement",
+              "properties": {
+                "concept_name": "Cholesterol content measurement",
+                "vocabulary_id": "SNOMED",
+                "concept_class_id": "Procedure",
+                "standard_concept": "S",
+                "confidence_score": 1.0,
+                "source_text": "Non-HDL Cholesterol Measurement"
+              },
+              "relationships": []
+            }
+          }
+        ]
+      },
+      "summary": {
+        "total_entities": 3,
+        "mapped_entities": 3
+      }
+    }
+  },
+  "kg_nodes": [
+    {
+      "node_id": 44827514,
+      "node_type": "condition",
+      "properties": {
+        "concept_name": "Cardiovascular syphilis",
+        "vocabulary_id": "ICD9CM",
+        "concept_class_id": "3-dig nonbill code",
+        "standard_concept": null,
+        "confidence_score": 1.0,
+        "source_text": "Cardiovascular Disease"
+      },
+      "relationships": []
+    },
+    {
+      "node_id": 922570,
+      "node_type": "drug",
+      "properties": {
+        "concept_name": "nystatin",
+        "vocabulary_id": "RxNorm",
+        "concept_class_id": "Ingredient",
+        "standard_concept": "S",
+        "confidence_score": 1.0,
+        "source_text": "Statin"
+      },
+      "relationships": []
+    },
+    {
+      "node_id": 44788717,
+      "node_type": "measurement",
+      "properties": {
+        "concept_name": "Cholesterol content measurement",
+        "vocabulary_id": "SNOMED",
+        "concept_class_id": "Procedure",
+        "standard_concept": "S",
+        "confidence_score": 1.0,
+        "source_text": "Non-HDL Cholesterol Measurement"
+      },
+      "relationships": []
+    }
+  ]
+}

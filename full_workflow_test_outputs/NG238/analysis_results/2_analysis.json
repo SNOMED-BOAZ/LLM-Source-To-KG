@@ -1,0 +1,122 @@
+{
+  "source_reference_number": "NG238",
+  "is_valid": true,
+  "retries": 0,
+  "answer": "Analysis completed successfully",
+  "analysis": {
+    "drug": null,
+    "diagnostic": {
+      "concept_name": "Cardiovascular disease",
+      "domain_id": "Condition",
+      "mapping_confidence": 0.95,
+      "source_text_span": "cardiovascular disease"
+    },
+    "test": {
+      "concept_name": "QRISK3 score",
+      "domain_id": "Measurement",
+      "mapping_confidence": 0.9,
+      "test_name": "QRISK3 score",
+      "operator": ">=",
+      "value": 10.0,
+      "unit": "%",
+      "source_text_span": "QRISK3 score >= 10%"
+    },
+    "surgery": null,
+    "source_text_span": "Individuals without established cardiovascular disease who are being assessed for their risk of developing CVD and considered for interventions to reduce that risk.\nIndividuals with a 10-year CVD risk score of 10% or greater based on the QRISK3 assessment tool."
+  },
+  "mapping_result": {
+    "single_cohort": {
+      "status": "success",
+      "mappings": {
+        "all_entities": [
+          {
+            "original_entity": "Cardiovascular disease",
+            "omop_mapping": {
+              "concept_id": 44827514,
+              "concept_name": "Cardiovascular syphilis",
+              "domain_id": "condition",
+              "vocabulary_id": "ICD9CM",
+              "concept_class_id": "3-dig nonbill code",
+              "standard_concept": null,
+              "confidence_score": 1.0,
+              "source_text": "Cardiovascular disease"
+            },
+            "mapping_status": "success",
+            "kg_node": {
+              "node_id": 44827514,
+              "node_type": "condition",
+              "properties": {
+                "concept_name": "Cardiovascular syphilis",
+                "vocabulary_id": "ICD9CM",
+                "concept_class_id": "3-dig nonbill code",
+                "standard_concept": null,
+                "confidence_score": 1.0,
+                "source_text": "Cardiovascular disease"
+              },
+              "relationships": []
+            }
+          },
+          {
+            "original_entity": "QRISK3 score",
+            "omop_mapping": {
+              "concept_id": 4166741,
+              "concept_name": "Trauma score",
+              "domain_id": "measurement",
+              "vocabulary_id": "SNOMED",
+              "concept_class_id": "Staging / Scales",
+              "standard_concept": "S",
+              "confidence_score": 1.0,
+              "source_text": "QRISK3 score"
+            },
+            "mapping_status": "success",
+            "kg_node": {
+              "node_id": 4166741,
+              "node_type": "measurement",
+              "properties": {
+                "concept_name": "Trauma score",
+                "vocabulary_id": "SNOMED",
+                "concept_class_id": "Staging / Scales",
+                "standard_concept": "S",
+                "confidence_score": 1.0,
+                "source_text": "QRISK3 score"
+              },
+              "relationships": []
+            }
+          }
+        ]
+      },
+      "summary": {
+        "total_entities": 2,
+        "mapped_entities": 2
+      }
+    }
+  },
+  "kg_nodes": [
+    {
+      "node_id": 44827514,
+      "node_type": "condition",
+      "properties": {
+        "concept_name": "Cardiovascular syphilis",
+        "vocabulary_id": "ICD9CM",
+        "concept_class_id": "3-dig nonbill code",
+        "standard_concept": null,
+        "confidence_score": 1.0,
+        "source_text": "Cardiovascular disease"
+      },
+      "relationships": []
+    },
+    {
+      "node_id": 4166741,
+      "node_type": "measurement",
+      "properties": {
+        "concept_name": "Trauma score",
+        "vocabulary_id": "SNOMED",
+        "concept_class_id": "Staging / Scales",
+        "standard_concept": "S",
+        "confidence_score": 1.0,
+        "source_text": "QRISK3 score"
+      },
+      "relationships": []
+    }
+  ]
+}
