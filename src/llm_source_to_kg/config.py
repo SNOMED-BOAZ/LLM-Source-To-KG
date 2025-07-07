@@ -29,7 +29,22 @@ class Config:
     GRPC_SERVER_PORT = os.getenv("GRPC_SERVER_PORT")
     if not GRPC_SERVER_PORT:
         raise ValueError("GRPC_SERVER_PORT is not set")
-
+    
+    NEO4J_SERVER_URI = os.getenv("NEO4J_SERVER_URI")
+    if not NEO4J_SERVER_URI:
+        raise ValueError("NEO4J_SERVER_URI is not set")
+    
+    NEO4J_SERVER_USER = os.getenv("NEO4J_SERVER_USER")
+    if not NEO4J_SERVER_USER:
+        raise ValueError("NEO4J_SERVER_USER is not set")
+    
+    NEO4J_SERVER_PASSWORD = os.getenv("NEO4J_SERVER_PASSWORD")
+    if not NEO4J_SERVER_PASSWORD:
+        raise ValueError("NEO4J_SERVER_PASSWORD is not set")
+    
+    NEO4J_SERVER_DATABASE = os.getenv("NEO4J_SERVER_DATABASE")
+    if not NEO4J_SERVER_DATABASE:
+        raise ValueError("NEO4J_SERVER_DATABASE is not set")
 
     
     # AWS S3 관련 설정

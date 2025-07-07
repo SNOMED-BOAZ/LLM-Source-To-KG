@@ -1,0 +1,120 @@
+{
+  "source_reference_number": "NG238",
+  "is_valid": true,
+  "retries": 0,
+  "answer": "Analysis completed successfully",
+  "analysis": {
+    "drug": {
+      "concept_name": "Lipid Lowering Drugs",
+      "domain_id": "Drug",
+      "vocabulary_id": "ATC",
+      "mapping_confidence": 0.9,
+      "drug_name": "lipid-lowering treatment",
+      "source_text_span": "lipid-lowering treatment"
+    },
+    "diagnostic": {
+      "concept_name": "Cardiovascular Disease",
+      "domain_id": "Condition",
+      "mapping_confidence": 0.95,
+      "source_text_span": "established cardiovascular disease"
+    },
+    "test": null,
+    "surgery": null,
+    "source_text_span": "Individuals with established cardiovascular disease receiving interventions to prevent further cardiovascular events.\nAdults with established CVD who are currently receiving lipid-lowering treatment."
+  },
+  "mapping_result": {
+    "single_cohort": {
+      "status": "success",
+      "mappings": {
+        "all_entities": [
+          {
+            "original_entity": "Cardiovascular Disease",
+            "omop_mapping": {
+              "concept_id": 44827514,
+              "concept_name": "Cardiovascular syphilis",
+              "domain_id": "condition",
+              "vocabulary_id": "ICD9CM",
+              "concept_class_id": "3-dig nonbill code",
+              "standard_concept": null,
+              "confidence_score": 1.0,
+              "source_text": "Cardiovascular Disease"
+            },
+            "mapping_status": "success",
+            "kg_node": {
+              "node_id": 44827514,
+              "node_type": "condition",
+              "properties": {
+                "concept_name": "Cardiovascular syphilis",
+                "vocabulary_id": "ICD9CM",
+                "concept_class_id": "3-dig nonbill code",
+                "standard_concept": null,
+                "confidence_score": 1.0,
+                "source_text": "Cardiovascular Disease"
+              },
+              "relationships": []
+            }
+          },
+          {
+            "original_entity": "Lipid Lowering Drugs",
+            "omop_mapping": {
+              "concept_id": 43563496,
+              "concept_name": "thistle flower juice",
+              "domain_id": "drug",
+              "vocabulary_id": "RxNorm Extension",
+              "concept_class_id": "Ingredient",
+              "standard_concept": null,
+              "confidence_score": 1.0,
+              "source_text": "Lipid Lowering Drugs"
+            },
+            "mapping_status": "success",
+            "kg_node": {
+              "node_id": 43563496,
+              "node_type": "drug",
+              "properties": {
+                "concept_name": "thistle flower juice",
+                "vocabulary_id": "RxNorm Extension",
+                "concept_class_id": "Ingredient",
+                "standard_concept": null,
+                "confidence_score": 1.0,
+                "source_text": "Lipid Lowering Drugs"
+              },
+              "relationships": []
+            }
+          }
+        ]
+      },
+      "summary": {
+        "total_entities": 2,
+        "mapped_entities": 2
+      }
+    }
+  },
+  "kg_nodes": [
+    {
+      "node_id": 44827514,
+      "node_type": "condition",
+      "properties": {
+        "concept_name": "Cardiovascular syphilis",
+        "vocabulary_id": "ICD9CM",
+        "concept_class_id": "3-dig nonbill code",
+        "standard_concept": null,
+        "confidence_score": 1.0,
+        "source_text": "Cardiovascular Disease"
+      },
+      "relationships": []
+    },
+    {
+      "node_id": 43563496,
+      "node_type": "drug",
+      "properties": {
+        "concept_name": "thistle flower juice",
+        "vocabulary_id": "RxNorm Extension",
+        "concept_class_id": "Ingredient",
+        "standard_concept": null,
+        "confidence_score": 1.0,
+        "source_text": "Lipid Lowering Drugs"
+      },
+      "relationships": []
+    }
+  ]
+}

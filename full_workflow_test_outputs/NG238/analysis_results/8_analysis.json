@@ -1,0 +1,119 @@
+{
+  "source_reference_number": "NG238",
+  "is_valid": true,
+  "retries": 0,
+  "answer": "Analysis completed successfully",
+  "analysis": {
+    "drug": {
+      "concept_name": "Statin",
+      "domain_id": "Drug",
+      "vocabulary_id": "RxNorm",
+      "mapping_confidence": 0.9,
+      "drug_name": "Statins",
+      "source_text_span": "statins"
+    },
+    "diagnostic": {
+      "concept_name": "Drug contraindication",
+      "domain_id": "Condition",
+      "mapping_confidence": 0.8,
+      "source_text_span": "Statin contraindication"
+    },
+    "test": null,
+    "surgery": null
+  },
+  "mapping_result": {
+    "single_cohort": {
+      "status": "success",
+      "mappings": {
+        "all_entities": [
+          {
+            "original_entity": "Drug contraindication",
+            "omop_mapping": {
+              "concept_id": 40385696,
+              "concept_name": "Calcification of lens",
+              "domain_id": "condition",
+              "vocabulary_id": "SNOMED",
+              "concept_class_id": "Disorder",
+              "standard_concept": null,
+              "confidence_score": 1.0,
+              "source_text": "Drug contraindication"
+            },
+            "mapping_status": "success",
+            "kg_node": {
+              "node_id": 40385696,
+              "node_type": "condition",
+              "properties": {
+                "concept_name": "Calcification of lens",
+                "vocabulary_id": "SNOMED",
+                "concept_class_id": "Disorder",
+                "standard_concept": null,
+                "confidence_score": 1.0,
+                "source_text": "Drug contraindication"
+              },
+              "relationships": []
+            }
+          },
+          {
+            "original_entity": "Statin",
+            "omop_mapping": {
+              "concept_id": 922570,
+              "concept_name": "nystatin",
+              "domain_id": "drug",
+              "vocabulary_id": "RxNorm",
+              "concept_class_id": "Ingredient",
+              "standard_concept": "S",
+              "confidence_score": 1.0,
+              "source_text": "Statin"
+            },
+            "mapping_status": "success",
+            "kg_node": {
+              "node_id": 922570,
+              "node_type": "drug",
+              "properties": {
+                "concept_name": "nystatin",
+                "vocabulary_id": "RxNorm",
+                "concept_class_id": "Ingredient",
+                "standard_concept": "S",
+                "confidence_score": 1.0,
+                "source_text": "Statin"
+              },
+              "relationships": []
+            }
+          }
+        ]
+      },
+      "summary": {
+        "total_entities": 2,
+        "mapped_entities": 2
+      }
+    }
+  },
+  "kg_nodes": [
+    {
+      "node_id": 40385696,
+      "node_type": "condition",
+      "properties": {
+        "concept_name": "Calcification of lens",
+        "vocabulary_id": "SNOMED",
+        "concept_class_id": "Disorder",
+        "standard_concept": null,
+        "confidence_score": 1.0,
+        "source_text": "Drug contraindication"
+      },
+      "relationships": []
+    },
+    {
+      "node_id": 922570,
+      "node_type": "drug",
+      "properties": {
+        "concept_name": "nystatin",
+        "vocabulary_id": "RxNorm",
+        "concept_class_id": "Ingredient",
+        "standard_concept": "S",
+        "confidence_score": 1.0,
+        "source_text": "Statin"
+      },
+      "relationships": []
+    }
+  ]
+}

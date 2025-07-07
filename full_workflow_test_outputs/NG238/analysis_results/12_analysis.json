@@ -1,0 +1,121 @@
+{
+  "source_reference_number": "NG238",
+  "is_valid": true,
+  "retries": 0,
+  "answer": "Analysis completed successfully",
+  "analysis": {
+    "drug": {
+      "concept_name": "Statin",
+      "domain_id": "Drug",
+      "vocabulary_id": "RxNorm",
+      "mapping_confidence": 0.95,
+      "drug_name": "statins",
+      "source_text_span": "Individuals currently prescribed statins for either primary or secondary prevention of CVD."
+    },
+    "diagnostic": {
+      "concept_name": "Cardiovascular disease",
+      "domain_id": "Condition",
+      "mapping_confidence": 0.8,
+      "source_text_span": "Individuals currently prescribed statins for either primary or secondary prevention of CVD."
+    },
+    "test": null,
+    "surgery": null,
+    "temporal_relation": "discontinued statin therapy due to drug interactions or illness",
+    "source_text_span": "Individuals who have temporarily discontinued statin therapy due to drug interactions or illness."
+  },
+  "mapping_result": {
+    "single_cohort": {
+      "status": "success",
+      "mappings": {
+        "all_entities": [
+          {
+            "original_entity": "Cardiovascular disease",
+            "omop_mapping": {
+              "concept_id": 44827514,
+              "concept_name": "Cardiovascular syphilis",
+              "domain_id": "condition",
+              "vocabulary_id": "ICD9CM",
+              "concept_class_id": "3-dig nonbill code",
+              "standard_concept": null,
+              "confidence_score": 1.0,
+              "source_text": "Cardiovascular disease"
+            },
+            "mapping_status": "success",
+            "kg_node": {
+              "node_id": 44827514,
+              "node_type": "condition",
+              "properties": {
+                "concept_name": "Cardiovascular syphilis",
+                "vocabulary_id": "ICD9CM",
+                "concept_class_id": "3-dig nonbill code",
+                "standard_concept": null,
+                "confidence_score": 1.0,
+                "source_text": "Cardiovascular disease"
+              },
+              "relationships": []
+            }
+          },
+          {
+            "original_entity": "Statin",
+            "omop_mapping": {
+              "concept_id": 922570,
+              "concept_name": "nystatin",
+              "domain_id": "drug",
+              "vocabulary_id": "RxNorm",
+              "concept_class_id": "Ingredient",
+              "standard_concept": "S",
+              "confidence_score": 1.0,
+              "source_text": "Statin"
+            },
+            "mapping_status": "success",
+            "kg_node": {
+              "node_id": 922570,
+              "node_type": "drug",
+              "properties": {
+                "concept_name": "nystatin",
+                "vocabulary_id": "RxNorm",
+                "concept_class_id": "Ingredient",
+                "standard_concept": "S",
+                "confidence_score": 1.0,
+                "source_text": "Statin"
+              },
+              "relationships": []
+            }
+          }
+        ]
+      },
+      "summary": {
+        "total_entities": 2,
+        "mapped_entities": 2
+      }
+    }
+  },
+  "kg_nodes": [
+    {
+      "node_id": 44827514,
+      "node_type": "condition",
+      "properties": {
+        "concept_name": "Cardiovascular syphilis",
+        "vocabulary_id": "ICD9CM",
+        "concept_class_id": "3-dig nonbill code",
+        "standard_concept": null,
+        "confidence_score": 1.0,
+        "source_text": "Cardiovascular disease"
+      },
+      "relationships": []
+    },
+    {
+      "node_id": 922570,
+      "node_type": "drug",
+      "properties": {
+        "concept_name": "nystatin",
+        "vocabulary_id": "RxNorm",
+        "concept_class_id": "Ingredient",
+        "standard_concept": "S",
+        "confidence_score": 1.0,
+        "source_text": "Statin"
+      },
+      "relationships": []
+    }
+  ]
+}

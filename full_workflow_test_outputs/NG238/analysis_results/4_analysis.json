@@ -1,0 +1,75 @@
+{
+  "source_reference_number": "NG238",
+  "is_valid": true,
+  "retries": 0,
+  "answer": "Analysis completed successfully",
+  "analysis": {
+    "drug": null,
+    "diagnostic": {
+      "concept_name": "Cardiovascular Disease",
+      "domain_id": "Condition",
+      "mapping_confidence": 0.95,
+      "source_text_span": "cardiovascular disease"
+    },
+    "test": null,
+    "surgery": null,
+    "etc": "Individuals with clinical judgement suggesting high CVD risk due to factors not fully captured by the QRISK3 tool.",
+    "temporal_relation": "Individuals without established cardiovascular disease who are being assessed for their risk of developing CVD",
+    "source_text_span": "Individuals without established cardiovascular disease who are being assessed for their risk of developing CVD and considered for interventions to reduce that risk."
+  },
+  "mapping_result": {
+    "single_cohort": {
+      "status": "success",
+      "mappings": {
+        "all_entities": [
+          {
+            "original_entity": "Cardiovascular Disease",
+            "omop_mapping": {
+              "concept_id": 44827514,
+              "concept_name": "Cardiovascular syphilis",
+              "domain_id": "condition",
+              "vocabulary_id": "ICD9CM",
+              "concept_class_id": "3-dig nonbill code",
+              "standard_concept": null,
+              "confidence_score": 1.0,
+              "source_text": "Cardiovascular Disease"
+            },
+            "mapping_status": "success",
+            "kg_node": {
+              "node_id": 44827514,
+              "node_type": "condition",
+              "properties": {
+                "concept_name": "Cardiovascular syphilis",
+                "vocabulary_id": "ICD9CM",
+                "concept_class_id": "3-dig nonbill code",
+                "standard_concept": null,
+                "confidence_score": 1.0,
+                "source_text": "Cardiovascular Disease"
+              },
+              "relationships": []
+            }
+          }
+        ]
+      },
+      "summary": {
+        "total_entities": 1,
+        "mapped_entities": 1
+      }
+    }
+  },
+  "kg_nodes": [
+    {
+      "node_id": 44827514,
+      "node_type": "condition",
+      "properties": {
+        "concept_name": "Cardiovascular syphilis",
+        "vocabulary_id": "ICD9CM",
+        "concept_class_id": "3-dig nonbill code",
+        "standard_concept": null,
+        "confidence_score": 1.0,
+        "source_text": "Cardiovascular Disease"
+      },
+      "relationships": []
+    }
+  ]
+}
